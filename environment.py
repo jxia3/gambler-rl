@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.random import Generator
+import torch
 from typing import Optional
 
 class GamblerState:
@@ -16,15 +17,15 @@ class GamblerState:
         self.wealth = wealth
         self.rng = rng
 
-    def get_observation(self) -> np.ndarray:
+    def get_observation(self) -> torch.Tensor:
         """Encodes the player's current wealth as a one-hot vector."""
-        observation = np.zeros(self.target_wealth - 1, dtype=np.int32)
+        observation = torch.zeros(self.target_wealth - 1, dtype=torch.int32)
         observation[self.wealth - 1] = 1
         return observation
 
-    def get_action_mask(self) -> np.ndarray:
+    def get_action_mask(self) -> torch.Tensor:
         """Encodes the legal actions given the player's current wealth."""
-        action_mask = np.zeros(self.target_wealth - 1, dtype=np.int32)
+        action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.int32)
         action_mask[:self.wealth] = 1
         return action_mask
 
@@ -45,13 +46,14 @@ class GamblerGame:
     - Reward: +1 if the player's wealth reaches TARGET_WEALTH, -1 if the player's
       wealth reaches 0, and 0 otherwise.
     """
-    TARGET_WEALTH: int = 20
-    WIN_PROB: float = 0.5
+    target_wealth: int
+    win_prob: float
+    rng: Generator
 
-    seed: int
-
-    def __init__(self, seed: int = 0):
-        self.seed = seed
+    def __init__(self, target_wealth: int, win_prob: float, seed: int):
+        self.target_wealth = target_wealth
+        self.win_prob = win_prob
+        self.rng = np.random.default_rng(seed=seed)
 
     def reset(self) -> tuple[GamblerState]:
         """
@@ -60,7 +62,7 @@ class GamblerGame:
         """
         raise NotImplementedError
 
-    def step(self, action: np.ndarray) -> tuple[float, Optional[GamblerState]]:
+    def step(self, state: GamblerState, action: int) -> tuple[float, Optional[GamblerState]]:
         """
         Transitions the Markov decision process at the state with the player action.
         The reward is returned, and if the episode terminates, no next state is returned.
