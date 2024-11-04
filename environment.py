@@ -12,17 +12,19 @@ class GamblerState:
     """
     target_wealth: int
     wealth: int
+    done: bool
     rng: Generator
 
-    def __init__(self, target_wealth: int, wealth: int, rng: Generator):
+    def __init__(self, target_wealth: int, wealth: int, done: bool, rng: Generator):
         self.target_wealth = target_wealth
         self.wealth = wealth
+        self.done = done
         self.rng = rng
 
     def get_observation(self) -> torch.Tensor:
         """Encodes the player's current wealth as a one-hot vector."""
-        observation = torch.zeros(self.target_wealth - 1, dtype=torch.int32)
-        observation[self.wealth - 1] = 1
+        observation = torch.zeros(self.target_wealth + 1, dtype=torch.int32)
+        observation[self.wealth] = 1
         return observation
 
     def get_action_mask(self) -> torch.Tensor:
@@ -43,9 +45,8 @@ class GamblerGame:
     WIN_PROB and otherwise loses the bet.
 
     - State space: The player's current wealth encoded as a one-hot vector with
-      size TARGET_WEALTH - 1.
-    - Action space: A one-hot vector with size TARGET_WEALTH - 1 indicating the
-      amount to bet. Illegal actions are masked.
+      size TARGET_WEALTH + 1. Note that 0 and TARGET_WEALTH are terminal states.
+    - Action space: An integer in [1, TARGET_WEALTH - 1] indicating the bet amount.
     - Transition dynamics: With probability WIN_PROB, the player's wealth increases
       by the bet amount, otherwise, the player's wealth decreases by the bet amount.
       The game terminates when the player's wealth reaches TARGET_WEALTH or 0.
@@ -57,6 +58,8 @@ class GamblerGame:
     rng: Generator
 
     def __init__(self, target_wealth: int, win_prob: float, seed: int):
+        assert target_wealth > 0
+        assert 0 <= win_prob and win_prob <= 1
         self.target_wealth = target_wealth
         self.win_prob = win_prob
         self.rng = np.random.default_rng(seed=seed)
@@ -71,6 +74,7 @@ class GamblerGame:
         return GamblerState(
             self.target_wealth,
             wealth,
+            False,
             np.random.default_rng(seed=seed),
         )
 
@@ -79,4 +83,6 @@ class GamblerGame:
         Transitions the Markov decision process at the state with the player action.
         The reward is returned, and if the episode terminates, no next state is returned.
         """
+        assert not state.done
+        assert action >= 1 and action <= state.wealth
         raise NotImplementedError
