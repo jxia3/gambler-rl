@@ -3,6 +3,8 @@ from numpy.random import Generator
 import torch
 from typing import Optional
 
+SEED_RANGE = (0, 1_000_000_000)
+
 class GamblerState:
     """
     A state in the gambler Markov decision process that contains the current
@@ -28,6 +30,10 @@ class GamblerState:
         action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.int32)
         action_mask[:self.wealth] = 1
         return action_mask
+
+    def __repr__(self) -> str:
+        """Formats the state as a string."""
+        return f"GamblerState(target_wealth={self.target_wealth}, wealth={self.wealth})"
 
 class GamblerGame:
     """
@@ -55,12 +61,18 @@ class GamblerGame:
         self.win_prob = win_prob
         self.rng = np.random.default_rng(seed=seed)
 
-    def reset(self) -> tuple[GamblerState]:
+    def reset(self) -> GamblerState:
         """
         Creates a new instance of the gambler game starting with a random initial wealth.
         Each instance is associated with a random generator with a different seed.
         """
-        raise NotImplementedError
+        seed = self.rng.integers(SEED_RANGE[0], SEED_RANGE[1])
+        wealth = self.rng.integers(0, self.target_wealth)
+        return GamblerState(
+            self.target_wealth,
+            wealth,
+            np.random.default_rng(seed=seed),
+        )
 
     def step(self, state: GamblerState, action: int) -> tuple[float, Optional[GamblerState]]:
         """
