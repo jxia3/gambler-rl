@@ -17,10 +17,16 @@ class GamblerState:
         self.rng = rng
 
     def get_observation(self) -> np.ndarray:
-        raise NotImplementedError
+        """Encodes the player's current wealth as a one-hot vector."""
+        observation = np.zeros(self.target_wealth - 1, dtype=np.int32)
+        observation[self.wealth - 1] = 1
+        return observation
 
     def get_action_mask(self) -> np.ndarray:
-        raise NotImplementedError
+        """Encodes the legal actions given the player's current wealth."""
+        action_mask = np.zeros(self.target_wealth - 1, dtype=np.int32)
+        action_mask[:self.wealth] = 1
+        return action_mask
 
 class GamblerGame:
     """
@@ -48,7 +54,15 @@ class GamblerGame:
         self.seed = seed
 
     def reset(self) -> tuple[GamblerState]:
+        """
+        Creates a new instance of the gambler game starting with a random initial wealth.
+        Each instance is associated with a random generator with a different seed.
+        """
         raise NotImplementedError
 
     def step(self, action: np.ndarray) -> tuple[float, Optional[GamblerState]]:
+        """
+        Transitions the Markov decision process at the state with the player action.
+        The reward is returned, and if the episode terminates, no next state is returned.
+        """
         raise NotImplementedError
