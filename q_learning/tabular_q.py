@@ -10,7 +10,7 @@ from q_learning.buffer import Transition, TransitionBuffer
 INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.99992
+LEARNING_RATE_DECAY: float = 0.99993
 MIN_LEARNING_RATE: float = 0.0005
 
 INITIAL_EXPLORE: float = 1
