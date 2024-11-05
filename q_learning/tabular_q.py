@@ -1,3 +1,4 @@
+import json
 import numpy as np
 from numpy.random import Generator
 
@@ -53,7 +54,7 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarray, dict]:
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
 
@@ -104,4 +105,12 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
             print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
 
-    return scores
+    return (q_table, scores)
+
+def save_model(q_table: np.ndarray, save_path: str):
+    """Saves the Q-table in a file in a readable JSON format."""
+    table = []
+    for row in q_table:
+        table.append([float(v) for v in row])
+    with open(save_path, "w") as file:
+        file.write(json.dumps(table, indent=4))

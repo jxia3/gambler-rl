@@ -73,7 +73,7 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Module, dict]:
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
     torch.manual_seed(rand.generate_seed(rng))
@@ -138,4 +138,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
             print(f"Explore factor: {explore_factor}")
             print()
 
-    return {}
+    return (policy_network, {})
+
+def save_model(model: nn.Module, save_path: str):
+    """Saves the model weights in a file in a readable JSON format."""

@@ -18,11 +18,15 @@ SEED: int = 0
 TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
-        "save_path": "data/tabular_q.json",
+        "save_fn": tabular_q.save_model,
+        "data_path": "data/tabular_q_data.json",
+        "model_path": "data/tabular_q_model.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
-        "save_path": "data/deep_q.json",
+        "save_fn": deep_q.save_model,
+        "data_path": "data/deep_q_data.json",
+        "model_path": "data/deep_q_model.json",
     },
 }
 MODEL = "tabular_q"
@@ -35,15 +39,18 @@ evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))
 
 # Train agent and save results
 config = TRAIN_CONFIG[MODEL]
-scores = config["train_fn"](train_env, evaluation, rand.generate_seed(rng))
+model, scores = config["train_fn"](train_env, evaluation, rand.generate_seed(rng))
 optimal_score = evaluation.evaluate_optimal(episodes=OPTIMAL_EPISODES)
 print(f"Optimal score: {round(optimal_score, 4)}")
 
-with open(config["save_path"], "w") as file:
+with open(config["data_path"], "w") as file:
     file.write(json.dumps({
         "target_wealth": TARGET_WEALTH,
         "win_prob": WIN_PROB,
         "optimal_score": optimal_score,
         "scores": scores,
-    }))
-print(f"Saved data to {config['save_path']}")
+    }, indent=4))
+print(f"Saved data to {config['data_path']}")
+
+config["save_fn"](model, config["model_path"])
+print(f"Saved model to {config['model_path']}")
