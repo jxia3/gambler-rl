@@ -107,11 +107,12 @@ def train(env: GamblerGame, seed: int):
 
         # Update the Q-values for using the discounted dynamic programming equation
         for transition in trajectory:
+            state_index = transition.state.get_index()
             target = transition.reward
             if not transition.next_state.done:
                 target += DISCOUNT_RATE * np.max(q_table[transition.next_state.get_index()])
-            q_table[transition.state.get_index()][transition.action] += \
-                LEARNING_RATE * (target - q_table[transition.state.get_index()][transition.action])
+            q_table[state_index][transition.action] += \
+                LEARNING_RATE * (target - q_table[state_index][transition.action])
 
         # Decay the explore factor
         if explore_factor > MIN_EXPLORE:
