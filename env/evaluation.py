@@ -3,7 +3,7 @@ from numpy.random import Generator
 import torch.nn as nn
 from typing import Callable, Optional
 
-from environment import GamblerGame, GamblerState
+from env.environment import GamblerGame, GamblerState
 
 class Evaluation:
     """
