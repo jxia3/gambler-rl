@@ -2,8 +2,8 @@ import json
 import numpy as np
 from numpy.random import Generator
 
-from environment import GamblerGame
-from eval.evaluation import Evaluation
+from env.environment import GamblerGame
+from env.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
 
 # Training parameters
@@ -14,7 +14,7 @@ LEARNING_RATE_DECAY: float = 0.99992
 MIN_LEARNING_RATE: float = 0.0005
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9992
+EXPLORE_DECAY: float = 0.9993
 MIN_EXPLORE: float = 0.005
 BUFFER_SIZE: int = 40_000
 BATCH_SIZE: int = 400

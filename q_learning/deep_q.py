@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from environment import GamblerGame, GamblerState
-from eval.evaluation import Evaluation
+from env.environment import GamblerGame
+from env.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
 import rand
 

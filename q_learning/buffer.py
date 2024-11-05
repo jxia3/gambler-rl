@@ -1,6 +1,6 @@
 from numpy.random import Generator
 
-from environment import GamblerState
+from env.environment import GamblerState
 
 class Transition:
     """

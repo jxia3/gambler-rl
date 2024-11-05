@@ -2,8 +2,8 @@ import json
 import numpy as np
 from typing import Any
 
-from environment import GamblerGame
-from eval.evaluation import Evaluation
+from env.environment import GamblerGame
+from env.evaluation import Evaluation
 from q_learning import deep_q, tabular_q
 import rand
 
@@ -19,8 +19,8 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": "data/tabular_q_data2.json",
-        "model_path": "data/tabular_q_model2.json",
+        "data_path": "data/tabular_q_data3.json",
+        "model_path": "data/tabular_q_model3.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
