@@ -75,7 +75,7 @@ def run_rollout(
 
 def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Module, dict]:
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed)
+    rng = rand.create_generator(seed)
     torch.manual_seed(rand.generate_seed(rng))
 
     # Actions are sampled from the policy network and value targets are computed

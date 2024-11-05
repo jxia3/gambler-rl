@@ -67,7 +67,7 @@ class GamblerGame:
         assert 0 <= win_prob and win_prob <= 1
         self.target_wealth = target_wealth
         self.win_prob = win_prob
-        self.rng = np.random.default_rng(seed)
+        self.rng = rand.create_generator(seed)
 
     def get_state_size(self) -> int:
         """Returns the size of the 1-dimensional state vector."""
@@ -99,7 +99,7 @@ class GamblerGame:
         """
         assert not state.done
         assert 0 <= action and action <= state.wealth - 1
-        rng = np.random.default_rng(state.seed)
+        rng = rand.create_generator(state.seed)
         bet_amount = action + 1
 
         next_wealth = None

@@ -37,7 +37,7 @@ def plot_run(data_path: str, params: dict, save_path: str):
 plot_run(
     "data/tabular_q_data4.json",
     {
-        "title": "Tabular Q-learning Score",
+        "title": "Tabular Q-learning score",
         "x_label": "Training episodes",
         "y_label": "Mean score",
     },

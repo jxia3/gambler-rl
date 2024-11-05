@@ -4,6 +4,7 @@ import torch.nn as nn
 from typing import Callable, Optional
 
 from env.environment import GamblerGame, GamblerState
+import rand
 
 class Evaluation:
     """
@@ -17,7 +18,7 @@ class Evaluation:
     def __init__(self, env: GamblerGame, episodes: int, seed: int):
         self.env = env
         self.episodes = episodes
-        self.rng = np.random.default_rng(seed)
+        self.rng = rand.create_generator(seed)
 
     def evaluate_q_table(self, q_table: np.ndarray, episodes: Optional[int] = None) -> float:
         """Evaluates a Q-table policy."""

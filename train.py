@@ -10,7 +10,7 @@ import rand
 # Game parameters
 TARGET_WEALTH: int = 99
 WIN_PROB: float = 0.4
-EVAL_EPISODES: int = 10_000
+EVAL_EPISODES: int = 1_000
 OPTIMAL_EPISODES: int = 100_000
 SEED: int = 0
 
@@ -19,8 +19,8 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": "data/tabular_q_data5.json",
-        "model_path": "data/tabular_q_model5.json",
+        "data_path": "data/tabular_q_data.json",
+        "model_path": "data/tabular_q_model.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
@@ -32,7 +32,7 @@ TRAIN_CONFIG: dict[str, Any] = {
 MODEL = "tabular_q"
 
 # Initialize environment and evaluation context
-rng = np.random.default_rng(seed=SEED)
+rng = rand.create_generator(SEED)
 train_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 eval_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))

@@ -5,6 +5,7 @@ from numpy.random import Generator
 from env.environment import GamblerGame
 from env.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
+import rand
 
 # Training parameters
 INIT_SDEV: float = 0.1
@@ -19,8 +20,8 @@ MIN_EXPLORE: float = 0.01
 BUFFER_SIZE: int = 40_000
 BATCH_SIZE: int = 400
 
-EPISODES: int = 500_000
-LOG_INTERVAL: int = 500
+EPISODES: int = 200_000
+LOG_INTERVAL: int = 1000
 
 def run_rollout(
     env: GamblerGame,
@@ -56,7 +57,7 @@ def run_rollout(
 
 def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarray, dict]:
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed)
+    rng = rand.create_generator(seed)
 
     # Initialize Q-table with random values from a normal distribution
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
@@ -85,12 +86,13 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarr
         done_mask = np.array([t.next_state.done for t in train_sample], dtype=np.bool_)
 
         # Update the Q-values using the discounted dynamic programming equation
-        q_max = q_table.max(axis=1)
+        prev_table = q_table.copy()
+        q_max = prev_table.max(axis=1)
         targets = rewards + DISCOUNT_RATE * q_max[next_indices] * (~done_mask)
         for t in range(len(train_sample)):
             state_index = train_sample[t].state.get_index()
             q_table[state_index][train_sample[t].action] += \
-                learning_rate * (targets[t] - q_table[state_index][train_sample[t].action])
+                learning_rate * (targets[t] - prev_table[state_index][train_sample[t].action])
 
         # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
