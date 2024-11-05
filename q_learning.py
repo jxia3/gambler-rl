@@ -108,20 +108,37 @@ def run_rollout(
         action = None
         if rng.random() < explore_factor:
             # Take random 'explore' action
-            actions = np.nonzero(state.get_action_mask().numpy())[0] + 1
+            actions = np.nonzero(state.get_action_mask().numpy())[0]
             action = rng.choice(actions)
         else:
             # Take 'exploit' action
             with torch.no_grad():
                 values = model.forward(state.get_observation())
                 values[~state.get_action_mask()] = -np.inf
-                action = int(torch.argmax(values).item() + 1)
+                action = int(torch.argmax(values).item())
 
         reward, next_state = env.step(state, action)
         transitions.append(Transition(state, action, reward, next_state))
         state = next_state
 
     return transitions
+
+def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
+    """Queries the model at each state to calculate the predicted policy."""
+    states = []
+    policy = []
+
+    for state in range(1, STATE_SIZE - 1):
+        observation = torch.zeros(STATE_SIZE, dtype=torch.float32)
+        observation[state] = 1
+        action_mask = torch.zeros(ACTION_SIZE, dtype=torch.bool)
+        action_mask[:state] = True
+
+        print(state)
+        print(observation)
+        print(action_mask)
+
+    return (states, policy)
 
 def train(env: GamblerGame, seed: int):
     """Trains a Deep Q-Learning agent on the gambler Markov decision process."""
@@ -138,3 +155,5 @@ def train(env: GamblerGame, seed: int):
     # Initialize training
     transitions = TransitionBuffer(rng)
     explore_factor = INITIAL_EXPLORE
+
+    get_model_policy(policy_network)

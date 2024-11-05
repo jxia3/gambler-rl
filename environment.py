@@ -47,7 +47,8 @@ class GamblerGame:
 
     - State space: The player's current wealth encoded as a one-hot vector with
       size TARGET_WEALTH + 1. Note that 0 and TARGET_WEALTH are terminal states.
-    - Action space: An integer in [1, TARGET_WEALTH - 1] indicating the bet amount.
+    - Action space: An integer in the range [0, TARGET_WEALTH - 2] indicating
+      1 fewer than the bet amount. Zero indexing is used for convenience.
     - Transition dynamics: With probability WIN_PROB, the player's wealth increases
       by the bet amount, otherwise, the player's wealth decreases by the bet amount.
       The game terminates when the player's wealth reaches TARGET_WEALTH or 0.
@@ -81,14 +82,15 @@ class GamblerGame:
         next state is marked as True.
         """
         assert not state.done
-        assert action >= 1 and action <= state.wealth
+        assert action >= 0 and action <= state.wealth - 1
+        bet_amount = action + 1
 
         rng = np.random.default_rng(seed=state.seed)
         next_wealth = None
         if rng.random() < self.win_prob:
-            next_wealth = min(state.wealth + action, self.target_wealth)
+            next_wealth = min(state.wealth + bet_amount, self.target_wealth)
         else:
-            next_wealth = max(state.wealth - action, 0)
+            next_wealth = max(state.wealth - bet_amount, 0)
         reward = 0
         if next_wealth == 0:
             reward = -1
