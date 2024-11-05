@@ -1,25 +1,25 @@
 import numpy as np
 from numpy.random import Generator
 import torch
-from typing import Optional
 
+# The inclusive integer range for sampling state seeds
 SEED_RANGE = (0, 1_000_000_000)
 
 class GamblerState:
     """
     A state in the gambler Markov decision process that contains the current
-    wealth and the random generator for the episode.
+    wealth and the random generator seed.
     """
     target_wealth: int
     wealth: int
     done: bool
-    rng: Generator
+    seed: int
 
-    def __init__(self, target_wealth: int, wealth: int, done: bool, rng: Generator):
+    def __init__(self, target_wealth: int, wealth: int, done: bool, seed: int):
         self.target_wealth = target_wealth
         self.wealth = wealth
         self.done = done
-        self.rng = rng
+        self.seed = seed
 
     def get_observation(self) -> torch.Tensor:
         """Encodes the player's current wealth as a one-hot vector."""
@@ -35,7 +35,8 @@ class GamblerState:
 
     def __repr__(self) -> str:
         """Formats the state as a string."""
-        return f"GamblerState(target_wealth={self.target_wealth}, wealth={self.wealth})"
+        return f"GamblerState(target_wealth={self.target_wealth}, " \
+            + f"wealth={self.wealth}, done={self.done}, seed={self.seed})"
 
 class GamblerGame:
     """
@@ -69,20 +70,35 @@ class GamblerGame:
         Creates a new instance of the gambler game starting with a random initial wealth.
         Each instance is associated with a random generator with a different seed.
         """
-        seed = self.rng.integers(SEED_RANGE[0], SEED_RANGE[1])
         wealth = self.rng.integers(0, self.target_wealth)
-        return GamblerState(
-            self.target_wealth,
-            wealth,
-            False,
-            np.random.default_rng(seed=seed),
-        )
+        seed = self.rng.integers(SEED_RANGE[0], SEED_RANGE[1])
+        return GamblerState(self.target_wealth, wealth, False, seed)
 
-    def step(self, state: GamblerState, action: int) -> tuple[float, Optional[GamblerState]]:
+    def step(self, state: GamblerState, action: int) -> tuple[float, GamblerState]:
         """
-        Transitions the Markov decision process at the state with the player action.
-        The reward is returned, and if the episode terminates, no next state is returned.
+        Advances the state in the Markov decision process with the player action. The step
+        function returns the reward, and if the episode terminates, the done flag on the
+        next state is marked as True.
         """
         assert not state.done
         assert action >= 1 and action <= state.wealth
-        raise NotImplementedError
+
+        rng = np.random.default_rng(seed=state.seed)
+        next_wealth = state.wealth
+        if rng.random() < self.win_prob:
+            next_wealth += action
+        else:
+            next_wealth -= action
+        reward = 0
+        if next_wealth == 0:
+            reward = -1
+        elif next_wealth == self.target_wealth:
+            reward = 1
+
+        next_state = GamblerState(
+            self.target_wealth,
+            next_wealth,
+            next_wealth == 0 or next_wealth == self.target_wealth,
+            rng.integers(SEED_RANGE[0], SEED_RANGE[1]),
+        )
+        return (reward, next_state)
