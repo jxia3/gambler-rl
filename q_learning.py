@@ -159,6 +159,7 @@ def train(env: GamblerGame, seed: int):
     target_network.load_state_dict(policy_network.state_dict())
 
     # Initialize training
+    optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
     transitions = TransitionBuffer(rng)
     explore_factor = INITIAL_EXPLORE
     policies = { 0: get_model_policy(policy_network) }
@@ -180,6 +181,7 @@ def train(env: GamblerGame, seed: int):
         done_mask = torch.tensor([t.next_state.done for t in train_sample], dtype=torch.bool)
 
         # Get the current value prediction and compute the value targets
+        # using the discounted dynamic programming equation
         predicted = policy_network.forward(states).gather(1, actions).flatten()
         targets = rewards
         with torch.no_grad():
@@ -187,7 +189,25 @@ def train(env: GamblerGame, seed: int):
             next_values[done_mask] = 0
             targets += DISCOUNT_RATE * next_values
 
-        print(predicted)
-        print(targets)
+        # Perform gradient descent with respect to the mean squared error loss
+        optimizer.zero_grad()
+        loss = nn.MSELoss()(predicted, targets)
+        loss.backward()
+        optimizer.step()
 
-        break
+        # Decay the explore factor
+        if explore_factor > MIN_EXPLORE:
+            explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
+
+        # Sync the policy network with the target network
+        if episode % SYNC_INTERVAL == 0:
+            target_network.load_state_dict(policy_network.state_dict())
+
+        # Log statistics
+        if episode % LOG_INTERVAL == 0:
+            policy = get_model_policy(policy_network)
+            policies[episode] = policy
+            print(f"[{episode}] Loss: {loss.item()}")
+            print(f"Explore factor: {explore_factor}")
+            print(policy)
+            print()
