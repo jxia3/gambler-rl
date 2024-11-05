@@ -2,7 +2,6 @@ import numpy as np
 
 from environment import GamblerGame
 import q_learning
-import policy_gradient
 
 # Game parameters
 TARGET_WEALTH: int = 20
