@@ -5,10 +5,6 @@ from environment import GamblerGame
 from eval.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
 
-# Q-table evaluation parameters
-EVAL_EPISODES: int = 10000
-EVAL_SEED: int = 1000
-
 # Training parameters
 INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
@@ -19,10 +15,10 @@ MIN_LEARNING_RATE: float = 0.001
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.9992
 MIN_EXPLORE: float = 0.01
-BUFFER_SIZE: int = 10000
+BUFFER_SIZE: int = 10_000
 BATCH_SIZE: int = 100
 
-EPISODES: int = 30000
+EPISODES: int = 50_000
 LOG_INTERVAL: int = 500
 
 def run_rollout(
