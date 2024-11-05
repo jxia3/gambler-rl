@@ -13,14 +13,14 @@ EVAL_SEED: int = 1000
 INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.9996
+LEARNING_RATE_DECAY: float = 0.9998
 MIN_LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9992
+EXPLORE_DECAY: float = 0.9994
 MIN_EXPLORE: float = 0.02
 BUFFER_SIZE: int = 2000
-BATCH_SIZE: int = 100
+BATCH_SIZE: int = 200
 
 EPISODES: int = 20000
 LOG_INTERVAL: int = 100
@@ -98,6 +98,10 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
 
         if episode % LOG_INTERVAL == 0:
             print(episode, learning_rate, explore_factor, evaluation.evaluate_q_table(q_table))
+
+        if episode % 1000 == 0:
+            for row in q_table:
+                print([round(float(f), 2) for f in row])
 
     print(evaluation.evaluate_optimal())
     print(evaluation.evaluate_optimal())
