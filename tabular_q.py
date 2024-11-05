@@ -11,13 +11,13 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 STATE_SIZE: int = 11
 ACTION_SIZE: int = 2
 DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.001
+LEARNING_RATE: float = 0.01
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.9994
 MIN_EXPLORE: float = 0.02
 
-EPISODES: int = 40000
+EPISODES: int = 50000
 LOG_INTERVAL: int = 1000
 
 class Transition:
@@ -69,6 +69,17 @@ def run_rollout(
 
     return transitions
 
+import random
+
+def eval_q(q_table: np.ndarray):
+    env = GamblerGame(10, 0.4, 20)
+    rng = np.random.default_rng(50)
+    total = 0
+    for r in range(10000):
+        trajectory = run_rollout(env, q_table, 0, rng)
+        total += trajectory[-1].reward
+    print(total / 10000)
+
 def train(env: GamblerGame, seed: int):
     """Trains a tabular Q-Learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng() # seed=seed
@@ -77,6 +88,7 @@ def train(env: GamblerGame, seed: int):
 
     for episode in range(1, EPISODES + 1):
         trajectory = run_rollout(env, q_table, explore_factor, rng)
+        random.shuffle(trajectory)
         for transition in trajectory:
             target = transition.reward
             if transition.next_state is not None:
@@ -91,3 +103,9 @@ def train(env: GamblerGame, seed: int):
             print(explore_factor)
             for row in q_table:
                 print(list([round(float(f), 6) for f in row]))
+
+    optimal = np.array([[0, 1] for s in range(STATE_SIZE)], dtype=np.float32)
+    print(q_table)
+    print(optimal)
+    eval_q(q_table)
+    eval_q(optimal)
