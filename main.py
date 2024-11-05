@@ -8,7 +8,7 @@ from q_learning import deep_q, tabular_q
 import rand
 
 # Game parameters
-TARGET_WEALTH: int = 20
+TARGET_WEALTH: int = 99
 WIN_PROB: float = 0.4
 EVAL_EPISODES: int = 10_000
 OPTIMAL_EPISODES: int = 100_000
