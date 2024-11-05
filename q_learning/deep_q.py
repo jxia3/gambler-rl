@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from q_learning.buffer import Transition, TransitionBuffer
 from environment import GamblerGame, GamblerState
+from eval.evaluation import Evaluation
+from q_learning.buffer import Transition, TransitionBuffer
 import rand
 
 # Training parameters
@@ -72,21 +73,7 @@ def run_rollout(
 
     return transitions
 
-def get_q_table(env: GamblerGame, model: ValueNetwork) -> np.ndarray:
-    """
-    Queries the model at each state to calculate the Q-table. For environments with large
-    state spaces or continuous states, storing the Q-table explicitly is intractable.
-    The gambler game has a small state space so we can represent the Q-table as a
-    2-dimensional array. Note that we only use the Q-table for efficient model evaluation.
-    """
-    q_table = np.zeros((env.get_state_size(), env.get_action_size()))
-    for state_index in range(1, env.get_state_size() - 1):
-        state = env.create_state(state_index)
-        print(state)
-
-    return np.array([])
-
-def train(env: GamblerGame, seed: int):
+def train(env: GamblerGame, evaluation: Evaluation, seed: int):
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
     torch.manual_seed(rand.generate_seed(rng))
