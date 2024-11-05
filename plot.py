@@ -28,6 +28,8 @@ def plot_run(data_path: str, params: dict, save_path: str):
     figure, axes = plt.subplots()
     axes.plot(x_values, y_values)
     axes.axhline(data["optimal_score"], linestyle="dashed")
+    axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
+
     axes.set_title(f"{env_key} {params['title']}")
     axes.set_xlabel(params["x_label"])
     axes.set_ylabel(params["y_label"])
@@ -35,11 +37,12 @@ def plot_run(data_path: str, params: dict, save_path: str):
     figure.savefig(save_path, bbox_inches="tight")
 
 plot_run(
-    "data/tabular_q_data8.json",
+    "data/tabular_q_data10.json",
     {
         "title": "Tabular Q-learning score",
         "x_label": "Training episodes",
         "y_label": "Mean score",
+        "y_limits": (0.05, 0.45),
     },
-    "charts/tabular_q8.png",
+    "charts/tabular_q10.png",
 )

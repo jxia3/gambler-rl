@@ -40,6 +40,12 @@ class Evaluation:
             episodes = self.episodes
         return self._evaluate_policy(self._get_optimal_action, episodes)
 
+    def evaluate_random(self, episodes: Optional[int] = None) -> float:
+        """Evaluates a random policy."""
+        if episodes is None:
+            episodes = self.episodes
+        return self._evaluate_policy(self._get_random_action, episodes)
+
     def _evaluate_policy(self, policy_fn: Callable[[GamblerState], int], episodes: int) -> float:
         """Evaluates a policy function that takes a state and returns an action."""
         total_reward = 0
@@ -75,3 +81,8 @@ class Evaluation:
         if self.env.win_prob >= 0.5:
             return 0
         return min(state.wealth, self.env.target_wealth - state.wealth) - 1
+
+    def _get_random_action(self, state: GamblerState) -> int:
+        """Selects a random action at a state."""
+        actions = np.nonzero(state.get_action_mask().numpy())[0]
+        return self.rng.choice(actions)
