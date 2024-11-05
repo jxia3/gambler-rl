@@ -10,19 +10,19 @@ EVAL_EPISODES: int = 10000
 EVAL_SEED: int = 1000
 
 # Training parameters
-INIT_SDEV: float = 0.5
+INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.9995
+LEARNING_RATE_DECAY: float = 0.9996
 MIN_LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.999
+EXPLORE_DECAY: float = 0.9992
 MIN_EXPLORE: float = 0.02
 BUFFER_SIZE: int = 2000
 BATCH_SIZE: int = 100
 
-EPISODES: int = 10000
+EPISODES: int = 20000
 LOG_INTERVAL: int = 100
 
 def run_rollout(
