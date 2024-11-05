@@ -10,15 +10,15 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 # Training parameters
 STATE_SIZE: int = 11
 ACTION_SIZE: int = 2
-DISCOUNT_RATE: float = 0.98
+DISCOUNT_RATE: float = 1
 LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.9994
-MIN_EXPLORE: float = 0.05
+MIN_EXPLORE: float = 0.02
 
-EPISODES: int = 10000
-LOG_INTERVAL: int = 10
+EPISODES: int = 40000
+LOG_INTERVAL: int = 1000
 
 class Transition:
     state: int
@@ -71,7 +71,7 @@ def run_rollout(
 
 def train(env: GamblerGame, seed: int):
     """Trains a tabular Q-Learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed=seed)
+    rng = np.random.default_rng() # seed=seed
     q_table = np.zeros((STATE_SIZE, ACTION_SIZE), dtype=np.float32)
     explore_factor = INITIAL_EXPLORE
 
@@ -89,4 +89,5 @@ def train(env: GamblerGame, seed: int):
 
         if episode % LOG_INTERVAL == 0:
             print(explore_factor)
-            print(q_table)
+            for row in q_table:
+                print(list([round(float(f), 6) for f in row]))

@@ -96,7 +96,7 @@ class GamblerGame:
             next_wealth = max(state.wealth - bet_amount, 0)
         reward = 0
         if next_wealth == 0:
-            reward = -1
+            reward = 0
         elif next_wealth == self.target_wealth:
             reward = 1
 
