@@ -12,16 +12,16 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 # Training parameters
 STATE_SIZE: int = 21
 ACTION_SIZE: int = STATE_SIZE - 2
-HIDDEN_SIZE: int = 128
-DISCOUNT_RATE: float = 0.95
+HIDDEN_SIZE: int = 256
+DISCOUNT_RATE: float = 0.9
 LEARNING_RATE: float = 0.001
-SYNC_INTERVAL: int = 4
+SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9997
+EXPLORE_DECAY: float = 0.9995
 MIN_EXPLORE: float = 0.1
 BUFFER_SIZE: int = 40000
-BATCH_SIZE: int = 2048
+BATCH_SIZE: int = 2000
 
 EPISODES: int = 10000
 LOG_INTERVAL: int = 100
@@ -101,6 +101,7 @@ def run_rollout(
     model: ValueNetwork,
     explore_factor: float,
     rng: Generator,
+    p
 ) -> list[Transition]:
     """
     Simulates a trajectory in the Markov decision process with the Q-value network.
@@ -125,6 +126,7 @@ def run_rollout(
                     print("value:")
                     print(state.get_observation())
                     print(values)
+                    print(p.forward(state.get_observation()))
                 values[~state.get_action_mask()] = -np.inf
                 action = int(torch.argmax(values).item())
                 if log:
@@ -177,7 +179,7 @@ def train(env: GamblerGame, seed: int):
     for episode in range(1, EPISODES + 1):
         # Simulate trajectory with the current policy network
         for r in range(100):
-            trajectory = run_rollout(env, policy_network, explore_factor, rng)
+            trajectory = run_rollout(env, policy_network, explore_factor, rng, target_network)
             transitions.insert(trajectory)
         if len(transitions) < BATCH_SIZE:
             continue
