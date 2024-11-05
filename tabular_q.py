@@ -17,7 +17,7 @@ INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.9994
 MIN_EXPLORE: float = 0.05
 
-EPISODES: int = 1000
+EPISODES: int = 10000
 LOG_INTERVAL: int = 10
 
 class Transition:
@@ -83,5 +83,10 @@ def train(env: GamblerGame, seed: int):
                 target += DISCOUNT_RATE * np.max(q_table[transition.next_state])
             current = q_table[transition.state][transition.action]
             q_table[transition.state][transition.action] += LEARNING_RATE * (target - current)
+
+        if explore_factor > MIN_EXPLORE:
+            explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
+
         if episode % LOG_INTERVAL == 0:
+            print(explore_factor)
             print(q_table)

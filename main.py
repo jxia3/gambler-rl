@@ -6,7 +6,7 @@ import tabular_q
 
 # Game parameters
 TARGET_WEALTH: int = 10
-WIN_PROB: float = 0.2
+WIN_PROB: float = 0.6
 SEED: int = 0
 SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 
