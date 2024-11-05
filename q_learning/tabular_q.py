@@ -1,8 +1,9 @@
 import numpy as np
 from numpy.random import Generator
 
-from q_learning.buffer import Transition, TransitionBuffer
 from environment import GamblerGame
+from eval.evaluation import Evaluation
+from q_learning.buffer import Transition, TransitionBuffer
 
 # Q-table evaluation parameters
 EVAL_EPISODES: int = 10000
@@ -79,7 +80,7 @@ def create_optimal_table(env: GamblerGame) -> np.ndarray:
         q_table[wealth][bet_amount - 1] = 1
     return q_table
 
-def train(env: GamblerGame, seed: int):
+def train(env: GamblerGame, evaluation: Evaluation, seed: int):
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
 
@@ -97,13 +98,12 @@ def train(env: GamblerGame, seed: int):
 
         # Sample random batch for training
         train_sample = transitions.sample(BATCH_SIZE)
-
-        # Update the Q-values for using the discounted dynamic programming equation
         for transition in train_sample:
             state_index = transition.state.get_index()
             target = transition.reward
             if not transition.next_state.done:
                 target += DISCOUNT_RATE * np.max(q_table[transition.next_state.get_index()])
+            # Update the Q-values using the discounted dynamic programming equation
             q_table[state_index][transition.action] += \
                 LEARNING_RATE * (target - q_table[state_index][transition.action])
 
