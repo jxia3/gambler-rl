@@ -15,5 +15,5 @@ SEED: int = 0
 rng = np.random.default_rng() # seed=SEED
 train_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 eval_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
-evaluation = Evaluation(eval_env, EVAL_EPISODES)
+evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))
 tabular_q.train(train_env, evaluation, rand.generate_seed(rng))

@@ -1,6 +1,7 @@
 import numpy as np
+from numpy.random import Generator
 import torch.nn as nn
-from typing import Optional
+from typing import Callable, Optional
 
 from environment import GamblerGame, GamblerState
 
@@ -11,22 +12,43 @@ class Evaluation:
     """
     env: GamblerGame
     episodes: int
+    rng: Generator
 
-    def __init__(self, env: GamblerGame, episodes: int):
+    def __init__(self, env: GamblerGame, episodes: int, seed: int):
         self.env = env
         self.episodes = episodes
+        self.rng = np.random.default_rng(seed)
 
     def evaluate_q_table(self, q_table: np.ndarray, episodes: Optional[int] = None) -> float:
         """Evaluates a Q-table policy."""
-        return 0
+        if episodes is None:
+            episodes = self.episodes
+        return self._evaluate_policy(
+            lambda state: self._get_q_table_action(q_table, state),
+            episodes,
+        )
 
     def evaluate_q_network(self, model: nn.Module, episodes: Optional[int] = None) -> float:
         """Evaluates a Q-value neural network policy."""
-        return 0
+        q_table = self._get_q_table(model)
+        return self.evaluate_q_table(q_table, episodes)
 
     def evaluate_optimal(self, episodes: Optional[int] = None) -> float:
         """Evaluates the optimal policy."""
-        return 0
+        if episodes is None:
+            episodes = self.episodes
+        return self._evaluate_policy(self._get_optimal_action, episodes)
+
+    def _evaluate_policy(self, policy_fn: Callable[[GamblerState], int], episodes: int) -> float:
+        """Evaluates a policy function that takes a state and returns an action."""
+        total_reward = 0
+        for e in range(episodes):
+            state = self.env.reset()
+            while not state.done:
+                action = policy_fn(state)
+                reward, state = self.env.step(state, action)
+                total_reward += reward
+        return total_reward / episodes
 
     def _get_q_table_action(self, q_table: np.ndarray, state: GamblerState) -> int:
         """Queries an explicit Q-table for an action at a state."""
