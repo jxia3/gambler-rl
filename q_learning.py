@@ -48,6 +48,15 @@ class Transition:
     reward: float
     next_state: GamblerState
 
+    def __init__(self, state: GamblerState, action: int, reward: float, next_state: GamblerState):
+        self.state = state
+        self.action = action
+        self.reward = reward
+        self.next_state = next_state
+
+    def __repr__(self) -> str:
+        return f"({self.state}, {self.action}, {self.reward}, {self.next_state})"
+
 def run_rollout(
     env: GamblerGame,
     model: ValueNetwork,
@@ -62,6 +71,23 @@ def run_rollout(
     transitions = []
     state = env.reset()
 
+    while not state.done:
+        action = None
+        if rng.random() < explore_factor:
+            # Take random 'explore' action
+            actions = np.nonzero(state.get_action_mask().numpy())[0] + 1
+            action = rng.choice(actions)
+        else:
+            # Take 'exploit' action
+            with torch.no_grad():
+                values = model.forward(state.get_observation())
+                values[~state.get_action_mask()] = -np.inf
+                action = int(torch.argmax(values).item() + 1)
+
+        reward, next_state = env.step(state, action)
+        transitions.append(Transition(state, action, reward, next_state))
+        state = next_state
+
     return transitions
 
 def train(env: GamblerGame, seed: int):
@@ -70,8 +96,6 @@ def train(env: GamblerGame, seed: int):
     torch.manual_seed(rng.integers(SEED_RANGE[0], SEED_RANGE[1]))
     model = ValueNetwork()
 
-    print(model)
-    state = env.reset()
-    print(state)
-    print(state.get_observation())
-    print(model.forward(state.get_observation()))
+    transitions = run_rollout(env, model, 0.5, rng)
+    for t in transitions:
+        print(t)

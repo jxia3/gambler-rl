@@ -29,8 +29,8 @@ class GamblerState:
 
     def get_action_mask(self) -> torch.Tensor:
         """Encodes the legal actions given the player's current wealth."""
-        action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.int8)
-        action_mask[:self.wealth] = 1
+        action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.bool)
+        action_mask[:self.wealth] = True
         return action_mask
 
     def __repr__(self) -> str:
