@@ -11,14 +11,14 @@ import rand
 INIT_SDEV: float = 0.01
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.03
-LEARNING_RATE_DECAY: float = 0.99999
+LEARNING_RATE_DECAY: float = 0.999992
 MIN_LEARNING_RATE: float = 0.0005
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.99995
 MIN_EXPLORE: float = 0.01
 BUFFER_SIZE: int = 80_000
-BATCH_SIZE: int = 500
+BATCH_SIZE: int = 600
 
 EPISODES: int = 500_000
 LOG_INTERVAL: int = 1000
@@ -106,6 +106,9 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarr
             scores[episode] = score
             print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
+
+        if episode % 20000 == 0:
+            print(q_table[-4])
 
     return (q_table, scores)
 

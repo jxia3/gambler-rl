@@ -35,11 +35,11 @@ def plot_run(data_path: str, params: dict, save_path: str):
     figure.savefig(save_path, bbox_inches="tight")
 
 plot_run(
-    "data/tabular_q_data.json",
+    "data/tabular_q_data3.json",
     {
         "title": "Tabular Q-learning score",
         "x_label": "Training episodes",
         "y_label": "Mean score",
     },
-    "charts/tabular_q.png",
+    "charts/tabular_q3.png",
 )
