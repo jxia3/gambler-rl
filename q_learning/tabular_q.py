@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.random import Generator
 
-from buffer import Transition, TransitionBuffer
-from environment import GamblerGame, GamblerState
+from q_learning.buffer import Transition, TransitionBuffer
+from environment import GamblerGame
 
 # Q-table evaluation parameters
 EVAL_EPISODES: int = 10000
@@ -10,16 +10,15 @@ EVAL_SEED: int = 1000
 
 # Training parameters
 DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.01
+LEARNING_RATE: float = 0.005
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.999
+EXPLORE_DECAY: float = 0.998
 MIN_EXPLORE: float = 0.02
 BUFFER_SIZE: int = 2000
 BATCH_SIZE: int = 100
 
-EPOCHS: int = 1000
-EPISODES: int = 100
+EPISODES: int = 3000
 LOG_INTERVAL: int = 100
 
 def run_rollout(
@@ -83,19 +82,24 @@ def create_optimal_table(env: GamblerGame) -> np.ndarray:
 def train(env: GamblerGame, seed: int):
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
+
+    # Initialize training
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
+    transitions = TransitionBuffer(BUFFER_SIZE, rng)
     explore_factor = INITIAL_EXPLORE
 
-    for epoch in range(1, EPOCHS + 1):
-        # Simulate trajectories with the current Q-table network
-        transitions = []
-        for e in range(EPISODES):
-            trajectory = run_rollout(env, q_table, explore_factor, rng)
-            transitions += trajectory
-        rng.shuffle(transitions)
+    for episode in range(1, EPISODES + 1):
+        # Simulate trajectory with the current Q-table
+        trajectory = run_rollout(env, q_table, explore_factor, rng)
+        transitions.insert(trajectory)
+        if len(transitions) < BATCH_SIZE:
+            continue
+
+        # Sample random batch for training
+        train_sample = transitions.sample(BATCH_SIZE)
 
         # Update the Q-values for using the discounted dynamic programming equation
-        for transition in trajectory:
+        for transition in train_sample:
             state_index = transition.state.get_index()
             target = transition.reward
             if not transition.next_state.done:
@@ -107,8 +111,8 @@ def train(env: GamblerGame, seed: int):
         if explore_factor > MIN_EXPLORE:
             explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
 
-        if epoch % LOG_INTERVAL == 0:
-            print(epoch, explore_factor, evaluate_q_table(env, q_table))
+        if episode % LOG_INTERVAL == 0:
+            print(episode, explore_factor, evaluate_q_table(env, q_table))
             for row in q_table:
                 print([round(float(f), 3) for f in row])
 

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from buffer import Transition, TransitionBuffer
+from q_learning.buffer import Transition, TransitionBuffer
 from environment import GamblerGame, GamblerState
 import rand
 
