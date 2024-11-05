@@ -8,19 +8,19 @@ from q_learning.buffer import Transition, TransitionBuffer
 import rand
 
 # Training parameters
-INIT_SDEV: float = 0.1
+INIT_SDEV: float = 0.01
 DISCOUNT_RATE: float = 1
-INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.99993
+INITIAL_LEARNING_RATE: float = 0.03
+LEARNING_RATE_DECAY: float = 0.99999
 MIN_LEARNING_RATE: float = 0.0005
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9992
+EXPLORE_DECAY: float = 0.99995
 MIN_EXPLORE: float = 0.01
-BUFFER_SIZE: int = 40_000
-BATCH_SIZE: int = 400
+BUFFER_SIZE: int = 80_000
+BATCH_SIZE: int = 500
 
-EPISODES: int = 200_000
+EPISODES: int = 500_000
 LOG_INTERVAL: int = 1000
 
 def run_rollout(
