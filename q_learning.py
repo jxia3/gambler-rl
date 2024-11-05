@@ -15,6 +15,7 @@ ACTION_SIZE: int = STATE_SIZE - 2
 HIDDEN_SIZE: int = 64
 DISCOUNT_RATE: float = 0.97
 LEARNING_RATE: float = 0.01
+SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.999
@@ -173,9 +174,20 @@ def train(env: GamblerGame, seed: int):
         # for efficient batch neural network queries
         train_sample = transitions.sample(BATCH_SIZE)
         states = torch.vstack([t.state.get_observation() for t in train_sample])
-        actions = torch.tensor([t.action for t in train_sample], dtype=torch.int32)
+        actions = torch.vstack([torch.tensor(t.action, dtype=torch.int64) for t in train_sample])
         rewards = torch.tensor([t.reward for t in train_sample], dtype=torch.float32)
         next_states = torch.vstack([t.next_state.get_observation() for t in train_sample])
         done_mask = torch.tensor([t.next_state.done for t in train_sample], dtype=torch.bool)
+
+        # Get the current value prediction and compute the value targets
+        predicted = policy_network.forward(states).gather(1, actions).flatten()
+        targets = rewards
+        with torch.no_grad():
+            next_values = target_network.forward(next_states).max(1).values
+            next_values[done_mask] = 0
+            targets += DISCOUNT_RATE * next_values
+
+        print(predicted)
+        print(targets)
 
         break
