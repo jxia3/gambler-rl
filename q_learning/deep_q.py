@@ -73,7 +73,7 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int):
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
     torch.manual_seed(rand.generate_seed(rng))
@@ -137,3 +137,5 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
             print(f"[{episode}] Loss: {loss.item()}")
             print(f"Explore factor: {explore_factor}")
             print()
+
+    return {}

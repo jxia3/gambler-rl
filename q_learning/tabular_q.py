@@ -53,7 +53,7 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int):
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
 
@@ -104,4 +104,4 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
             print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
 
-    print(scores)
+    return scores
