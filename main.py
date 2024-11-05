@@ -19,8 +19,8 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": "data/tabular_q_data.json",
-        "model_path": "data/tabular_q_model.json",
+        "data_path": "data/tabular_q_data2.json",
+        "model_path": "data/tabular_q_model2.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
