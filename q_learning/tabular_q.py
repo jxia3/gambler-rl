@@ -11,7 +11,9 @@ EVAL_SEED: int = 1000
 
 # Training parameters
 DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.005
+INITIAL_LEARNING_RATE: float = 0.01
+LEARNING_RATE_DECAY: float = 0.999
+MIN_LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.998
@@ -61,6 +63,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
     # Initialize training
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
     transitions = TransitionBuffer(BUFFER_SIZE, rng)
+    learning_rate = INITIAL_LEARNING_RATE
     explore_factor = INITIAL_EXPLORE
 
     for episode in range(1, EPISODES + 1):
@@ -79,14 +82,16 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
                 target += DISCOUNT_RATE * np.max(q_table[transition.next_state.get_index()])
             # Update the Q-values using the discounted dynamic programming equation
             q_table[state_index][transition.action] += \
-                LEARNING_RATE * (target - q_table[state_index][transition.action])
+                learning_rate * (target - q_table[state_index][transition.action])
 
-        # Decay the explore factor
+        # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
             explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
+        if learning_rate > MIN_LEARNING_RATE:
+            learning_rate = max(learning_rate * LEARNING_RATE_DECAY, MIN_LEARNING_RATE)
 
         if episode % LOG_INTERVAL == 0:
-            print(episode, explore_factor, evaluation.evaluate_q_table(q_table))
+            print(episode, learning_rate, explore_factor, evaluation.evaluate_q_table(q_table))
             for row in q_table:
                 print([round(float(f), 3) for f in row])
             print()
