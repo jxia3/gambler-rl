@@ -5,14 +5,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from environment import GamblerGame, GamblerState
-
-# The inclusive integer range for sampling PyTorch seeds
-SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
+import rand
 
 # Training parameters
-STATE_SIZE: int = 11
-ACTION_SIZE: int = 2 #STATE_SIZE - 2
-HIDDEN_SIZE: int = 128
+HIDDEN_SIZE: int = 32
 DISCOUNT_RATE: float = 1
 LEARNING_RATE: float = 0.005
 SYNC_INTERVAL: int = 10
@@ -21,9 +17,9 @@ INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.999
 MIN_EXPLORE: float = 0.02
 BUFFER_SIZE: int = 2000
-BATCH_SIZE: int = 64
+BATCH_SIZE: int = 100
 
-EPISODES: int = 10000
+EPISODES: int = 100000
 LOG_INTERVAL: int = 100
 
 class ValueNetwork(nn.Module):
@@ -31,10 +27,10 @@ class ValueNetwork(nn.Module):
     A Q-value neural network with 1 hidden layer that predicts the discounted
     value for each action at a state.
     """
-    def __init__(self):
+    def __init__(self, state_size: int, action_size: int):
         super(ValueNetwork, self).__init__()
-        self.hidden = nn.Linear(STATE_SIZE, HIDDEN_SIZE)
-        self.output = nn.Linear(HIDDEN_SIZE, ACTION_SIZE)
+        self.hidden = nn.Linear(state_size, HIDDEN_SIZE)
+        self.output = nn.Linear(HIDDEN_SIZE, action_size)
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
         out = self.hidden(state)
@@ -142,6 +138,7 @@ def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
         states.append(state)
         with torch.no_grad():
             values = model.forward(observation)
+            print([round(float(f), 6) for f in values.numpy()])
             values[~action_mask] = -np.inf
             actions.append(int(torch.argmax(values).item()))
 
@@ -166,12 +163,14 @@ def train(env: GamblerGame, seed: int):
     policies = { 0: get_model_policy(policy_network) }
 
     for episode in range(1, EPISODES + 1):
+        if episode >= 30000:
+            optimizer = torch.optim.Adam(policy_network.parameters(), lr=0.001)
+
         # Simulate trajectory with the current policy network
         trajectory = run_rollout(env, policy_network, explore_factor, rng)
         transitions.insert(trajectory)
         if len(transitions) < BATCH_SIZE:
             continue
-        print(episode, len(transitions))
 
         # Sample random batch for training and stack the transition data tensors
         # for efficient batch neural network queries

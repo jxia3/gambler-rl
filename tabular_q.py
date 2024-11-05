@@ -119,12 +119,25 @@ def train(env: GamblerGame, seed: int):
                 print(list([round(float(f), 6) for f in row]))
 
     optimal = np.array([[0, 1] for s in range(STATE_SIZE)], dtype=np.float32)
-    print(q_table)
-    print(optimal)
+    learned = np.array([
+        [0, 0],
+        [0.104898, 0.050239],
+        [0.163092, 0.125367],
+        [0.234201, 0.204824],
+        [0.336767, 0.324763],
+        [0.412257, 0.436402],
+        [0.526666, 0.546828],
+        [0.648328, 0.57335],
+        [0.719727, 0.741291],
+        [0.88195, 0.784508],
+        [0, 0]
+    ])
+
     eval_q(q_table)
     eval_q(optimal)
-    eval_action_table([1, 0, 1, 0, 1, 0, 0, 1, 1])
-    eval_action_table([1, 0, 1, 0, 1, 0, 0, 0, 0])
-    eval_action_table([1, 1, 1, 0, 1, 0, 0, 1, 1])
-    eval_action_table([0, 0, 0, 0, 1, 0, 0, 0, 0])
-    eval_action_table([1, 1, 1, 0, 1, 1, 0, 1, 1])
+    eval_q(learned)
+    eval_action_table([0, 0, 0, 0, 1, 1, 0, 1, 0])
+    eval_action_table([1, 0, 1, 1, 1, 1, 0, 1, 0])
+    eval_action_table([1, 1, 1, 0, 1, 0, 0, 1, 0])
+    eval_action_table([1, 1, 1, 0, 1, 0, 0, 0, 0])
+    eval_action_table([1, 1, 0, 0, 1, 0, 0, 1, 0])

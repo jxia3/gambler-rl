@@ -2,8 +2,7 @@ import numpy as np
 from numpy.random import Generator
 import torch
 
-# The inclusive integer range for sampling state seeds
-SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
+import rand
 
 class GamblerState:
     """
@@ -29,7 +28,6 @@ class GamblerState:
 
     def get_action_mask(self) -> torch.Tensor:
         """Encodes the legal actions given the player's current wealth."""
-        return torch.tensor([True, True], dtype=torch.bool)
         action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.bool)
         if not self.done:
             action_mask[:self.wealth] = True
@@ -68,13 +66,26 @@ class GamblerGame:
         self.win_prob = win_prob
         self.rng = np.random.default_rng(seed=seed)
 
+    def get_state_size(self) -> int:
+        """Returns the size of the 1-dimensional state vector."""
+        return self.target_wealth + 1
+
+    def get_action_size(self) -> int:
+        """Returns the number of available actions."""
+        return self.target_wealth - 1
+
     def reset(self) -> GamblerState:
-        """
-        Creates a new instance of the gambler game starting with a random initial wealth.
-        Each instance is associated with a random generator with a different seed.
-        """
+        """Creates a new gambler game state starting with a random initial wealth."""
         wealth = self.rng.integers(1, self.target_wealth)
-        seed = self.rng.integers(SEED_RANGE[0], SEED_RANGE[1])
+        return self.create_state(wealth)
+
+    def create_state(self, wealth: int) -> GamblerState:
+        """
+        Creates a game state starting with a given wealth. Each state is initialized with
+        a random generator with a different seed.
+        """
+        assert 1 <= wealth and wealth <= self.target_wealth - 1
+        seed = rand.generate_seed(self.rng)
         return GamblerState(self.target_wealth, wealth, False, seed)
 
     def step(self, state: GamblerState, action: int) -> tuple[float, GamblerState]:
@@ -84,9 +95,8 @@ class GamblerGame:
         next state is marked as True.
         """
         assert not state.done
-        assert action == 0 or action == 1
-        #assert action >= 0 and action <= state.wealth - 1
-        bet_amount = 1 if action == 0 else min(state.wealth, self.target_wealth - state.wealth) # action + 1
+        assert 0 <= action and action <= state.wealth - 1
+        bet_amount = action + 1
 
         rng = np.random.default_rng(seed=state.seed)
         next_wealth = None
@@ -104,6 +114,6 @@ class GamblerGame:
             self.target_wealth,
             next_wealth,
             next_wealth == 0 or next_wealth == self.target_wealth,
-            rng.integers(SEED_RANGE[0], SEED_RANGE[1]),
+            rand.generate_seed(rng),
         )
         return (reward, next_state)
