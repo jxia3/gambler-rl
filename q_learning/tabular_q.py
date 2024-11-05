@@ -14,7 +14,7 @@ INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
 LEARNING_RATE_DECAY: float = 0.9999
-MIN_LEARNING_RATE: float = 0.002
+MIN_LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.9992
@@ -23,7 +23,7 @@ BUFFER_SIZE: int = 10000
 BATCH_SIZE: int = 100
 
 EPISODES: int = 30000
-LOG_INTERVAL: int = 1000
+LOG_INTERVAL: int = 500
 
 def run_rollout(
     env: GamblerGame,
@@ -71,6 +71,8 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
     transitions = TransitionBuffer(BUFFER_SIZE, rng)
     learning_rate = INITIAL_LEARNING_RATE
     explore_factor = INITIAL_EXPLORE
+    scores = {}
+    scores[0] = evaluation.evaluate_q_table(q_table)
 
     for episode in range(1, EPISODES + 1):
         # Simulate trajectory with the current Q-table
@@ -97,12 +99,11 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
         if learning_rate > MIN_LEARNING_RATE:
             learning_rate = max(learning_rate * LEARNING_RATE_DECAY, MIN_LEARNING_RATE)
 
+        # Log statistics
         if episode % LOG_INTERVAL == 0:
-            print(episode, learning_rate, explore_factor, evaluation.evaluate_q_table(q_table))
+            score = evaluation.evaluate_q_table(q_table)
+            scores[episode] = score
+            print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
+                + f"explore={round(explore_factor, 4)}")
 
-        if episode % 1000 == 0:
-            print(q_table[-2])
-
-    print(evaluation.evaluate_optimal())
-    print(evaluation.evaluate_optimal())
-    print(evaluation.evaluate_optimal())
+    print(scores)
