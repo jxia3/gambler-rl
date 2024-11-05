@@ -13,17 +13,17 @@ EVAL_SEED: int = 1000
 INIT_SDEV: float = 0.1
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.9998
-MIN_LEARNING_RATE: float = 0.001
+LEARNING_RATE_DECAY: float = 0.9999
+MIN_LEARNING_RATE: float = 0.002
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9994
-MIN_EXPLORE: float = 0.02
-BUFFER_SIZE: int = 2000
-BATCH_SIZE: int = 200
+EXPLORE_DECAY: float = 0.9992
+MIN_EXPLORE: float = 0.01
+BUFFER_SIZE: int = 10000
+BATCH_SIZE: int = 100
 
-EPISODES: int = 20000
-LOG_INTERVAL: int = 100
+EPISODES: int = 30000
+LOG_INTERVAL: int = 1000
 
 def run_rollout(
     env: GamblerGame,
@@ -81,14 +81,15 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
 
         # Sample random batch for training
         train_sample = transitions.sample(BATCH_SIZE)
+        q_max = q_table.max(axis=1)
+
+        # Update the Q-values using the discounted dynamic programming equation
         for transition in train_sample:
-            state_index = transition.state.get_index()
             target = transition.reward
             if not transition.next_state.done:
-                target += DISCOUNT_RATE * np.max(q_table[transition.next_state.get_index()])
-            # Update the Q-values using the discounted dynamic programming equation
-            q_table[state_index][transition.action] += \
-                learning_rate * (target - q_table[state_index][transition.action])
+                target += DISCOUNT_RATE * q_max[transition.next_state.get_index()]
+            q_table[transition.state.get_index()][transition.action] += \
+                learning_rate * (target - q_table[transition.state.get_index()][transition.action])
 
         # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
@@ -100,8 +101,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
             print(episode, learning_rate, explore_factor, evaluation.evaluate_q_table(q_table))
 
         if episode % 1000 == 0:
-            for row in q_table:
-                print([round(float(f), 2) for f in row])
+            print(q_table[-2])
 
     print(evaluation.evaluate_optimal())
     print(evaluation.evaluate_optimal())
