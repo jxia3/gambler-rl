@@ -3,6 +3,10 @@ from numpy.random import Generator
 
 from environment import GamblerGame, GamblerState
 
+# Q-table evaluation parameters
+EVAL_EPISODES: int = 10000
+EVAL_SEED: int = 1000
+
 # Training parameters
 DISCOUNT_RATE: float = 1
 LEARNING_RATE: float = 0.005
@@ -65,9 +69,35 @@ def run_rollout(
 
     return transitions
 
+def evaluate_q_table(train_env: GamblerGame, q_table: np.ndarray):
+    """Evaluates the average reward of a Q-table policy by running random episodes."""
+    env = GamblerGame(train_env.target_wealth, train_env.win_prob, EVAL_SEED)
+    total_reward = 0
+
+    for e in range(EVAL_EPISODES):
+        state = env.reset()
+        while not state.done:
+            values = q_table[state.get_index()].copy()
+            values[~state.get_action_mask().numpy()] = -np.inf
+            action = int(np.argmax(values))
+            reward, state = env.step(state, action)
+            total_reward += reward
+
+    return total_reward / EVAL_EPISODES
+
+def create_optimal_table(env: GamblerGame) -> np.ndarray:
+    """Creates an optimal Q-table for a gambler game."""
+    q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
+    for wealth in range(1, env.target_wealth):
+        bet_amount = 1
+        if env.win_prob < 0.5:
+            bet_amount = min(wealth, env.target_wealth - wealth)
+        q_table[wealth][bet_amount - 1] = 1
+    return q_table
+
 def train(env: GamblerGame, seed: int):
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed=seed)
+    rng = np.random.default_rng(seed)
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
     explore_factor = INITIAL_EXPLORE
 
@@ -91,3 +121,7 @@ def train(env: GamblerGame, seed: int):
             print(explore_factor)
             for row in q_table:
                 print(list([round(float(f), 6) for f in row]))
+            print(evaluate_q_table(env, q_table))
+
+    optimal_table = create_optimal_table(env)
+    print(evaluate_q_table(env, optimal_table))

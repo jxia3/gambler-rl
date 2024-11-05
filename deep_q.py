@@ -139,7 +139,7 @@ def get_q_table(env: GamblerGame, model: ValueNetwork) -> np.ndarray:
 
 def train(env: GamblerGame, seed: int):
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed=seed)
+    rng = np.random.default_rng(seed)
     torch.manual_seed(rand.generate_seed(rng))
 
     # Actions are sampled from the policy network and value targets are computed
