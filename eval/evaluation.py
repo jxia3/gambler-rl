@@ -23,15 +23,15 @@ class Evaluation:
         """Evaluates a Q-table policy."""
         if episodes is None:
             episodes = self.episodes
-        return self._evaluate_policy(
-            lambda state: self._get_q_table_action(q_table, state),
-            episodes,
-        )
+        actions = self._get_q_table_actions(q_table)
+        return self._evaluate_policy(lambda s: actions[s.get_index()], episodes)
 
     def evaluate_q_network(self, model: nn.Module, episodes: Optional[int] = None) -> float:
         """Evaluates a Q-value neural network policy."""
-        q_table = self._get_q_table(model)
-        return self.evaluate_q_table(q_table, episodes)
+        if episodes is None:
+            episodes = self.episodes
+        actions = self._get_q_network_actions(model)
+        return self._evaluate_policy(lambda s: actions[s.get_index()], episodes)
 
     def evaluate_optimal(self, episodes: Optional[int] = None) -> float:
         """Evaluates the optimal policy."""
@@ -50,25 +50,24 @@ class Evaluation:
                 total_reward += reward
         return total_reward / episodes
 
-    def _get_q_table_action(self, q_table: np.ndarray, state: GamblerState) -> int:
-        """Queries an explicit Q-table for an action at a state."""
-        values = q_table[state.get_index()].copy()
-        values[~state.get_action_mask().numpy()] = -np.inf
-        return int(np.argmax(values))
-
-    def _get_q_table(self, model: nn.Module) -> np.ndarray:
-        """
-        Queries the model at each state to calculate the Q-table. For environments with large
-        state spaces or continuous states, storing the Q-table explicitly is intractable.
-        The gambler game has a small state space so we can represent the Q-table as a
-        2-dimensional array. Note that we only use the Q-table for efficient model evaluation.
-        """
-        q_table = np.zeros((self.env.get_state_size(), self.env.get_action_size()))
+    def _get_q_table_actions(self, q_table: np.ndarray) -> list[int]:
+        """Queries an explicit Q-table at each state for the predicted action."""
+        actions = [0] * self.env.get_state_size()
         for state_index in range(1, self.env.get_state_size() - 1):
             state = self.env.create_state(state_index)
-            print(state)
+            values = q_table[state.get_index()].copy()
+            values[~state.get_action_mask().numpy()] = -np.inf
+            actions[state_index] = int(np.argmax(values))
+        return actions
 
-        return np.array([])
+    def _get_q_network_actions(self, model: nn.Module) -> list[int]:
+        """
+        Queries the model at each state to calculate the predicted action. Note that for
+        environments with large state spaces or continuous states, storing the action
+        table or Q-table explicitly is intractable.
+        """
+        actions = [0] * self.env.get_state_size()
+        return actions
 
     def _get_optimal_action(self, state: GamblerState) -> int:
         """Computes the optimal action at a state based on the win probability."""

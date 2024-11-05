@@ -8,7 +8,7 @@ import rand
 # Game parameters
 TARGET_WEALTH: int = 10
 WIN_PROB: float = 0.4
-EVAL_EPISODES: int = 10000
+EVAL_EPISODES: int = 20000
 SEED: int = 0
 
 # Initialize environment and train agent

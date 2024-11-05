@@ -90,6 +90,3 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
             for row in q_table:
                 print([round(float(f), 3) for f in row])
             print()
-
-    optimal_table = create_optimal_table(env)
-    print(evaluate_q_table(env, optimal_table))
