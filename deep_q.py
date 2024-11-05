@@ -24,8 +24,8 @@ LOG_INTERVAL: int = 100
 
 class ValueNetwork(nn.Module):
     """
-    A Q-value neural network with 1 hidden layer that predicts the discounted
-    value for each action at a state.
+    A Q-value neural network with 1 hidden layer that predicts the discounted value
+    for each action at a state.
     """
     def __init__(self, state_size: int, action_size: int):
         super(ValueNetwork, self).__init__()
@@ -123,44 +123,36 @@ def run_rollout(
 
     return transitions
 
-def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
-    """Queries the model at each state to calculate the predicted policy."""
-    states = []
-    actions = []
+def get_q_table(env: GamblerGame, model: ValueNetwork) -> np.ndarray:
+    """
+    Queries the model at each state to calculate the Q-table. For environments with large
+    state spaces or continuous states, storing the Q-table explicitly is intractable.
+    The gambler game has a small state space so we can represent the Q-table as a
+    2-dimensional array. Note that we only use the Q-table for efficient model evaluation.
+    """
+    q_table = np.zeros((env.get_state_size(), env.get_action_size()))
+    for state_index in range(1, env.get_state_size() - 1):
+        state = env.create_state(state_index)
+        print(state)
 
-    for state in range(1, STATE_SIZE - 1):
-        observation = torch.zeros(STATE_SIZE, dtype=torch.float32)
-        observation[state] = 1
-        #action_mask = torch.zeros(ACTION_SIZE, dtype=torch.bool)
-        #action_mask[:state] = True
-        action_mask = torch.tensor([True, True], dtype=torch.bool)
-
-        states.append(state)
-        with torch.no_grad():
-            values = model.forward(observation)
-            print([round(float(f), 6) for f in values.numpy()])
-            values[~action_mask] = -np.inf
-            actions.append(int(torch.argmax(values).item()))
-
-    return (states, actions)
+    return np.array([])
 
 def train(env: GamblerGame, seed: int):
     """Trains a Deep Q-Learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed=seed)
-    torch.manual_seed(rng.integers(SEED_RANGE[0], SEED_RANGE[1]))
+    torch.manual_seed(rand.generate_seed(rng))
 
     # Actions are sampled from the policy network and value targets are computed
     # using the target network. Keeping the target network fixed for several
     # training iterations at a time stabilizes the training.
-    policy_network = ValueNetwork()
-    target_network = ValueNetwork()
+    policy_network = ValueNetwork(env.get_state_size(), env.get_action_size())
+    target_network = ValueNetwork(env.get_state_size(), env.get_action_size())
     target_network.load_state_dict(policy_network.state_dict())
 
     # Initialize training
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
     transitions = TransitionBuffer(rng)
     explore_factor = INITIAL_EXPLORE
-    policies = { 0: get_model_policy(policy_network) }
 
     for episode in range(1, EPISODES + 1):
         if episode >= 30000:
@@ -209,10 +201,6 @@ def train(env: GamblerGame, seed: int):
 
         # Log statistics
         if episode % LOG_INTERVAL == 0:
-            policy = get_model_policy(policy_network)
-            policies[episode] = policy
             print(f"[{episode}] Loss: {loss.item()}")
             print(f"Explore factor: {explore_factor}")
-            print(policy[0])
-            print(policy[1])
             print()
