@@ -23,13 +23,13 @@ class GamblerState:
 
     def get_observation(self) -> torch.Tensor:
         """Encodes the player's current wealth as a one-hot vector."""
-        observation = torch.zeros(self.target_wealth + 1, dtype=torch.int32)
+        observation = torch.zeros(self.target_wealth + 1, dtype=torch.float32)
         observation[self.wealth] = 1
         return observation
 
     def get_action_mask(self) -> torch.Tensor:
         """Encodes the legal actions given the player's current wealth."""
-        action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.int32)
+        action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.int8)
         action_mask[:self.wealth] = 1
         return action_mask
 
