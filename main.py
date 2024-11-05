@@ -6,7 +6,7 @@ import policy_gradient
 
 # Game parameters
 TARGET_WEALTH: int = 20
-WIN_PROB: float = 0.5
+WIN_PROB: float = 0.4
 SEED: int = 0
 SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 

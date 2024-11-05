@@ -12,19 +12,21 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 # Training parameters
 STATE_SIZE: int = 21
 ACTION_SIZE: int = STATE_SIZE - 2
-HIDDEN_SIZE: int = 64
+HIDDEN_SIZE: int = 128
 DISCOUNT_RATE: float = 0.97
 LEARNING_RATE: float = 0.001
 SYNC_INTERVAL: int = 4
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9995
+EXPLORE_DECAY: float = 0.9997
 MIN_EXPLORE: float = 0.1
-BUFFER_SIZE: int = 5000
-BATCH_SIZE: int = 256
+BUFFER_SIZE: int = 20000
+BATCH_SIZE: int = 1024
 
 EPISODES: int = 10000
 LOG_INTERVAL: int = 100
+
+import random
 
 class ValueNetwork(nn.Module):
     """
@@ -116,10 +118,18 @@ def run_rollout(
             action = rng.choice(actions)
         else:
             # Take 'exploit' action
+            log = random.randint(0, 500) == 0
             with torch.no_grad():
                 values = model.forward(state.get_observation())
+                if log:
+                    print("value:")
+                    print(state.get_observation())
+                    print(values)
                 values[~state.get_action_mask()] = -np.inf
                 action = int(torch.argmax(values).item())
+                if log:
+                    print("got action:", action)
+                    print()
 
         reward, next_state = env.step(state, action)
         transitions.append(Transition(state, action, reward, next_state))
@@ -166,8 +176,9 @@ def train(env: GamblerGame, seed: int):
 
     for episode in range(1, EPISODES + 1):
         # Simulate trajectory with the current policy network
-        trajectory = run_rollout(env, policy_network, explore_factor, rng)
-        transitions.insert(trajectory)
+        for r in range(30):
+            trajectory = run_rollout(env, policy_network, explore_factor, rng)
+            transitions.insert(trajectory)
         if len(transitions) < BATCH_SIZE:
             continue
 
@@ -178,6 +189,7 @@ def train(env: GamblerGame, seed: int):
         actions = torch.vstack([torch.tensor(t.action, dtype=torch.int64) for t in train_sample])
         rewards = torch.tensor([t.reward for t in train_sample], dtype=torch.float32)
         next_states = torch.vstack([t.next_state.get_observation() for t in train_sample])
+        next_action_masks = torch.vstack([t.next_state.get_action_mask() for t in train_sample])
         done_mask = torch.tensor([t.next_state.done for t in train_sample], dtype=torch.bool)
 
         # Get the current value prediction and compute the value targets
@@ -185,7 +197,9 @@ def train(env: GamblerGame, seed: int):
         predicted = policy_network.forward(states).gather(1, actions).flatten()
         targets = rewards
         with torch.no_grad():
-            next_values = target_network.forward(next_states).max(1).values
+            next_values = target_network.forward(next_states)
+            next_values[~next_action_masks] = -np.inf
+            next_values = next_values.max(1).values
             next_values[done_mask] = 0
             targets += DISCOUNT_RATE * next_values
 
