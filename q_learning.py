@@ -57,6 +57,39 @@ class Transition:
     def __repr__(self) -> str:
         return f"({self.state}, {self.action}, {self.reward}, {self.next_state})"
 
+class TransitionBuffer:
+    """A buffer that stores previous transitions and supports sampling for training."""
+    transitions: list[Transition]
+    index: int
+    rng: Generator
+
+    def __init__(self, rng: Generator):
+        self.transitions = []
+        self.index = 0
+        self.rng = rng
+
+    def insert(self, transitions: list[Transition]):
+        """Adds transitions to the buffer."""
+        for transition in transitions:
+            if len(self.transitions) < BUFFER_SIZE:
+                self.transitions.append(transition)
+            else:
+                self.transitions[self.index] = transition
+                self.index = (self.index + 1) % len(self.transitions)
+
+    def sample(self, count: int) -> list[Transition]:
+        """Returns random transitions from the buffer."""
+        assert 1 <= count and count <= len(self.transitions)
+        indices = self.rng.choice(len(self.transitions), size=count, replace=False)
+        sample = []
+        for index in indices:
+            sample.append(self.transitions[index])
+        return sample
+
+    def __len__(self) -> int:
+        """Returns the number of transitions in the buffer."""
+        return len(self.transitions)
+
 def run_rollout(
     env: GamblerGame,
     model: ValueNetwork,
@@ -94,8 +127,14 @@ def train(env: GamblerGame, seed: int):
     """Trains a Deep Q-Learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed=seed)
     torch.manual_seed(rng.integers(SEED_RANGE[0], SEED_RANGE[1]))
-    model = ValueNetwork()
 
-    transitions = run_rollout(env, model, 0.5, rng)
-    for t in transitions:
-        print(t)
+    # Actions are sampled from the policy network and value targets are computed
+    # using the target network. Keeping the target network fixed for several
+    # training iterations at a time stabilizes the training.
+    policy_network = ValueNetwork()
+    target_network = ValueNetwork()
+    target_network.load_state_dict(policy_network.state_dict())
+
+    # Initialize training
+    transitions = TransitionBuffer(rng)
+    explore_factor = INITIAL_EXPLORE
