@@ -14,14 +14,14 @@ STATE_SIZE: int = 21
 ACTION_SIZE: int = STATE_SIZE - 2
 HIDDEN_SIZE: int = 64
 DISCOUNT_RATE: float = 0.97
-LEARNING_RATE: float = 0.01
-SYNC_INTERVAL: int = 10
+LEARNING_RATE: float = 0.001
+SYNC_INTERVAL: int = 4
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.999
+EXPLORE_DECAY: float = 0.9995
 MIN_EXPLORE: float = 0.1
 BUFFER_SIZE: int = 5000
-BATCH_SIZE: int = 64
+BATCH_SIZE: int = 256
 
 EPISODES: int = 10000
 LOG_INTERVAL: int = 100
@@ -209,5 +209,6 @@ def train(env: GamblerGame, seed: int):
             policies[episode] = policy
             print(f"[{episode}] Loss: {loss.item()}")
             print(f"Explore factor: {explore_factor}")
-            print(policy)
+            print(policy[0])
+            print(policy[1])
             print()
