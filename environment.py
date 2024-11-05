@@ -84,11 +84,11 @@ class GamblerGame:
         assert action >= 1 and action <= state.wealth
 
         rng = np.random.default_rng(seed=state.seed)
-        next_wealth = state.wealth
+        next_wealth = None
         if rng.random() < self.win_prob:
-            next_wealth += action
+            next_wealth = min(state.wealth + action, self.target_wealth)
         else:
-            next_wealth -= action
+            next_wealth = max(state.wealth - action, 0)
         reward = 0
         if next_wealth == 0:
             reward = -1
