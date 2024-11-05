@@ -71,7 +71,7 @@ class GamblerGame:
         Creates a new instance of the gambler game starting with a random initial wealth.
         Each instance is associated with a random generator with a different seed.
         """
-        wealth = self.rng.integers(0, self.target_wealth)
+        wealth = self.rng.integers(1, self.target_wealth)
         seed = self.rng.integers(SEED_RANGE[0], SEED_RANGE[1])
         return GamblerState(self.target_wealth, wealth, False, seed)
 

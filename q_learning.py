@@ -19,8 +19,11 @@ LEARNING_RATE: float = 0.01
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.999
 MIN_EXPLORE: float = 0.1
-BUFFER_SIZE: int = 10000
-BATCH_SIZE: int = 256
+BUFFER_SIZE: int = 5000
+BATCH_SIZE: int = 64
+
+EPISODES: int = 10000
+LOG_INTERVAL: int = 100
 
 class ValueNetwork(nn.Module):
     """
@@ -157,5 +160,22 @@ def train(env: GamblerGame, seed: int):
     # Initialize training
     transitions = TransitionBuffer(rng)
     explore_factor = INITIAL_EXPLORE
+    policies = { 0: get_model_policy(policy_network) }
 
-    print(get_model_policy(policy_network))
+    for episode in range(1, EPISODES + 1):
+        # Simulate trajectory with the current policy network
+        trajectory = run_rollout(env, policy_network, explore_factor, rng)
+        transitions.insert(trajectory)
+        if len(transitions) < BATCH_SIZE:
+            continue
+
+        # Sample random batch for training and stack the transition data tensors
+        # for efficient batch neural network queries
+        train_sample = transitions.sample(BATCH_SIZE)
+        states = torch.vstack([t.state.get_observation() for t in train_sample])
+        actions = torch.tensor([t.action for t in train_sample], dtype=torch.int32)
+        rewards = torch.tensor([t.reward for t in train_sample], dtype=torch.float32)
+        next_states = torch.vstack([t.next_state.get_observation() for t in train_sample])
+        done_mask = torch.tensor([t.next_state.done for t in train_sample], dtype=torch.bool)
+
+        break
