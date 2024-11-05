@@ -18,7 +18,7 @@ EXPLORE_DECAY: float = 0.9994
 MIN_EXPLORE: float = 0.05
 
 EPISODES: int = 1000
-LOG_INTERVAL: int = 100
+LOG_INTERVAL: int = 10
 
 class Transition:
     state: int
@@ -47,7 +47,7 @@ def run_rollout(
 
     while not state.done:
         state_index = int(np.argmax(observation))
-        action_mask = state.get_action_mask()
+        action_mask = state.get_action_mask().numpy()
         action = None
         if rng.random() < explore_factor:
             actions = np.nonzero(action_mask)[0]
@@ -77,4 +77,11 @@ def train(env: GamblerGame, seed: int):
 
     for episode in range(1, EPISODES + 1):
         trajectory = run_rollout(env, q_table, explore_factor, rng)
-        print(trajectory)
+        for transition in trajectory:
+            target = transition.reward
+            if transition.next_state is not None:
+                target += DISCOUNT_RATE * np.max(q_table[transition.next_state])
+            current = q_table[transition.state][transition.action]
+            q_table[transition.state][transition.action] += LEARNING_RATE * (target - current)
+        if episode % LOG_INTERVAL == 0:
+            print(q_table)
