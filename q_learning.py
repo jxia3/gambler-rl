@@ -11,9 +11,9 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 
 # Training parameters
 STATE_SIZE: int = 21
-ACTION_SIZE: int = STATE_SIZE - 2
+ACTION_SIZE: int = 2 #STATE_SIZE - 2
 HIDDEN_SIZE: int = 256
-DISCOUNT_RATE: float = 0.9
+DISCOUNT_RATE: float = 0.98
 LEARNING_RATE: float = 0.001
 SYNC_INTERVAL: int = 10
 

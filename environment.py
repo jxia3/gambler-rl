@@ -29,6 +29,7 @@ class GamblerState:
 
     def get_action_mask(self) -> torch.Tensor:
         """Encodes the legal actions given the player's current wealth."""
+        return torch.tensor([True, True], dtype=torch.bool)
         action_mask = torch.zeros(self.target_wealth - 1, dtype=torch.bool)
         if not self.done:
             action_mask[:self.wealth] = True
@@ -83,8 +84,9 @@ class GamblerGame:
         next state is marked as True.
         """
         assert not state.done
-        assert action >= 0 and action <= state.wealth - 1
-        bet_amount = action + 1
+        assert action == 0 or action == 1
+        #assert action >= 0 and action <= state.wealth - 1
+        bet_amount = 1 if action == 0 else state.wealth#action + 1
 
         rng = np.random.default_rng(seed=state.seed)
         next_wealth = None
