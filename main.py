@@ -41,7 +41,9 @@ print(f"Optimal score: {round(optimal_score, 4)}")
 
 with open(config["save_path"], "w") as file:
     file.write(json.dumps({
-        "scores": scores,
+        "target_wealth": TARGET_WEALTH,
+        "win_prob": WIN_PROB,
         "optimal_score": optimal_score,
+        "scores": scores,
     }))
 print(f"Saved data to {config['save_path']}")
