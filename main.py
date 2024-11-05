@@ -4,8 +4,8 @@ from environment import GamblerGame
 import q_learning
 
 # Game parameters
-TARGET_WEALTH: int = 20
-WIN_PROB: float = 0.4
+TARGET_WEALTH: int = 10
+WIN_PROB: float = 0.2
 SEED: int = 0
 SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 

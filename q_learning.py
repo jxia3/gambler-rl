@@ -10,7 +10,7 @@ from environment import GamblerGame, GamblerState
 SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 
 # Training parameters
-STATE_SIZE: int = 21
+STATE_SIZE: int = 11
 ACTION_SIZE: int = 2 #STATE_SIZE - 2
 HIDDEN_SIZE: int = 256
 DISCOUNT_RATE: float = 0.98
@@ -18,8 +18,8 @@ LEARNING_RATE: float = 0.001
 SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9995
-MIN_EXPLORE: float = 0.1
+EXPLORE_DECAY: float = 0.9994
+MIN_EXPLORE: float = 0.05
 BUFFER_SIZE: int = 40000
 BATCH_SIZE: int = 2000
 
@@ -147,8 +147,9 @@ def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
     for state in range(1, STATE_SIZE - 1):
         observation = torch.zeros(STATE_SIZE, dtype=torch.float32)
         observation[state] = 1
-        action_mask = torch.zeros(ACTION_SIZE, dtype=torch.bool)
-        action_mask[:state] = True
+        #action_mask = torch.zeros(ACTION_SIZE, dtype=torch.bool)
+        #action_mask[:state] = True
+        action_mask = torch.tensor([True, True], dtype=torch.bool)
 
         states.append(state)
         with torch.no_grad():
