@@ -126,7 +126,7 @@ def run_rollout(
 def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
     """Queries the model at each state to calculate the predicted policy."""
     states = []
-    policy = []
+    actions = []
 
     for state in range(1, STATE_SIZE - 1):
         observation = torch.zeros(STATE_SIZE, dtype=torch.float32)
@@ -134,11 +134,13 @@ def get_model_policy(model: ValueNetwork) -> tuple[list[int], list[int]]:
         action_mask = torch.zeros(ACTION_SIZE, dtype=torch.bool)
         action_mask[:state] = True
 
-        print(state)
-        print(observation)
-        print(action_mask)
+        states.append(state)
+        with torch.no_grad():
+            values = model.forward(observation)
+            values[~action_mask] = -np.inf
+            actions.append(int(torch.argmax(values).item()))
 
-    return (states, policy)
+    return (states, actions)
 
 def train(env: GamblerGame, seed: int):
     """Trains a Deep Q-Learning agent on the gambler Markov decision process."""
@@ -156,4 +158,4 @@ def train(env: GamblerGame, seed: int):
     transitions = TransitionBuffer(rng)
     explore_factor = INITIAL_EXPLORE
 
-    get_model_policy(policy_network)
+    print(get_model_policy(policy_network))
