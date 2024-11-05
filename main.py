@@ -12,7 +12,7 @@ EVAL_EPISODES: int = 10000
 SEED: int = 0
 
 # Initialize environment and train agent
-rng = np.random.default_rng() # seed=SEED
+rng = np.random.default_rng(seed=SEED)
 train_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 eval_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))

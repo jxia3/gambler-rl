@@ -83,15 +83,17 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
 
         # Sample random batch for training
         train_sample = transitions.sample(BATCH_SIZE)
-        q_max = q_table.max(axis=1)
+        rewards = np.array([t.reward for t in train_sample], dtype=np.float32)
+        next_indices = np.array([t.next_state.get_index() for t in train_sample], dtype=np.int32)
+        done_mask = np.array([t.next_state.done for t in train_sample], dtype=np.bool_)
 
         # Update the Q-values using the discounted dynamic programming equation
-        for transition in train_sample:
-            target = transition.reward
-            if not transition.next_state.done:
-                target += DISCOUNT_RATE * q_max[transition.next_state.get_index()]
-            q_table[transition.state.get_index()][transition.action] += \
-                learning_rate * (target - q_table[transition.state.get_index()][transition.action])
+        q_max = q_table.max(axis=1)
+        targets = rewards + DISCOUNT_RATE * q_max[next_indices] * (~done_mask)
+        for t in range(len(train_sample)):
+            state_index = train_sample[t].state.get_index()
+            q_table[state_index][train_sample[t].action] += \
+                learning_rate * (targets[t] - q_table[state_index][train_sample[t].action])
 
         # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
