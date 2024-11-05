@@ -12,16 +12,16 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 # Training parameters
 STATE_SIZE: int = 11
 ACTION_SIZE: int = 2 #STATE_SIZE - 2
-HIDDEN_SIZE: int = 256
-DISCOUNT_RATE: float = 0.98
-LEARNING_RATE: float = 0.001
+HIDDEN_SIZE: int = 128
+DISCOUNT_RATE: float = 1
+LEARNING_RATE: float = 0.005
 SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9994
-MIN_EXPLORE: float = 0.05
-BUFFER_SIZE: int = 40000
-BATCH_SIZE: int = 2000
+EXPLORE_DECAY: float = 0.999
+MIN_EXPLORE: float = 0.02
+BUFFER_SIZE: int = 2000
+BATCH_SIZE: int = 64
 
 EPISODES: int = 10000
 LOG_INTERVAL: int = 100
@@ -179,11 +179,11 @@ def train(env: GamblerGame, seed: int):
 
     for episode in range(1, EPISODES + 1):
         # Simulate trajectory with the current policy network
-        for r in range(100):
-            trajectory = run_rollout(env, policy_network, explore_factor, rng, target_network)
-            transitions.insert(trajectory)
+        trajectory = run_rollout(env, policy_network, explore_factor, rng, target_network)
+        transitions.insert(trajectory)
         if len(transitions) < BATCH_SIZE:
             continue
+        print(episode, len(transitions))
 
         # Sample random batch for training and stack the transition data tensors
         # for efficient batch neural network queries
