@@ -11,6 +11,7 @@ import rand
 TARGET_WEALTH: int = 20
 WIN_PROB: float = 0.4
 EVAL_EPISODES: int = 10_000
+OPTIMAL_EPISODES: int = 100_000
 SEED: int = 0
 
 # Training configuration
@@ -35,5 +36,12 @@ evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))
 # Train agent and save results
 config = TRAIN_CONFIG[MODEL]
 scores = config["train_fn"](train_env, evaluation, rand.generate_seed(rng))
+optimal_score = evaluation.evaluate_optimal(episodes=OPTIMAL_EPISODES)
+print(f"Optimal score: {round(optimal_score, 4)}")
+
 with open(config["save_path"], "w") as file:
-    json.dump(scores, file)
+    file.write(json.dumps({
+        "scores": scores,
+        "optimal_score": optimal_score,
+    }))
+print(f"Saved data to {config['save_path']}")
