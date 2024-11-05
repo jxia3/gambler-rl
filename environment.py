@@ -3,7 +3,7 @@ from numpy.random import Generator
 import torch
 
 # The inclusive integer range for sampling state seeds
-SEED_RANGE = (0, 1_000_000_000)
+SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 
 class GamblerState:
     """
