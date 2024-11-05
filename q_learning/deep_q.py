@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from buffer import Transition, TransitionBuffer
 from environment import GamblerGame, GamblerState
 import rand
 
@@ -37,58 +38,6 @@ class ValueNetwork(nn.Module):
         out = F.relu(out)
         out = self.output(out)
         return out
-
-class Transition:
-    """
-    A tuple (s_t, a_t, r_t, s_{t + 1}) tracking a state transition in the Markov
-    decision process. Transitions are stored in a buffer used for training.
-    """
-    state: GamblerState
-    action: int
-    reward: float
-    next_state: GamblerState
-
-    def __init__(self, state: GamblerState, action: int, reward: float, next_state: GamblerState):
-        self.state = state
-        self.action = action
-        self.reward = reward
-        self.next_state = next_state
-
-    def __repr__(self) -> str:
-        return f"({self.state}, {self.action}, {self.reward}, {self.next_state})"
-
-class TransitionBuffer:
-    """A buffer that stores previous transitions and supports sampling for training."""
-    transitions: list[Transition]
-    index: int
-    rng: Generator
-
-    def __init__(self, rng: Generator):
-        self.transitions = []
-        self.index = 0
-        self.rng = rng
-
-    def insert(self, transitions: list[Transition]):
-        """Adds transitions to the buffer."""
-        for transition in transitions:
-            if len(self.transitions) < BUFFER_SIZE:
-                self.transitions.append(transition)
-            else:
-                self.transitions[self.index] = transition
-                self.index = (self.index + 1) % len(self.transitions)
-
-    def sample(self, count: int) -> list[Transition]:
-        """Returns random transitions from the buffer."""
-        assert 1 <= count and count <= len(self.transitions)
-        indices = self.rng.choice(len(self.transitions), size=count, replace=False)
-        sample = []
-        for index in indices:
-            sample.append(self.transitions[index])
-        return sample
-
-    def __len__(self) -> int:
-        """Returns the number of transitions in the buffer."""
-        return len(self.transitions)
 
 def run_rollout(
     env: GamblerGame,
@@ -151,7 +100,7 @@ def train(env: GamblerGame, seed: int):
 
     # Initialize training
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
-    transitions = TransitionBuffer(rng)
+    transitions = TransitionBuffer(BUFFER_SIZE, rng)
     explore_factor = INITIAL_EXPLORE
 
     for episode in range(1, EPISODES + 1):
