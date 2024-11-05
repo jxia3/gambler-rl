@@ -10,18 +10,19 @@ EVAL_EPISODES: int = 10000
 EVAL_SEED: int = 1000
 
 # Training parameters
+INIT_SDEV: float = 0.5
 DISCOUNT_RATE: float = 1
-INITIAL_LEARNING_RATE: float = 0.01
-LEARNING_RATE_DECAY: float = 0.999
+INITIAL_LEARNING_RATE: float = 0.02
+LEARNING_RATE_DECAY: float = 0.9995
 MIN_LEARNING_RATE: float = 0.001
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.998
+EXPLORE_DECAY: float = 0.999
 MIN_EXPLORE: float = 0.02
 BUFFER_SIZE: int = 2000
 BATCH_SIZE: int = 100
 
-EPISODES: int = 3000
+EPISODES: int = 10000
 LOG_INTERVAL: int = 100
 
 def run_rollout(
@@ -60,8 +61,13 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed)
 
-    # Initialize training
+    # Initialize Q-table with random values from a normal distribution
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
+    for s in range(env.get_state_size()):
+        for a in range(env.get_action_size()):
+            q_table[s][a] = rng.normal(loc=0, scale=INIT_SDEV)
+
+    # Initialize training
     transitions = TransitionBuffer(BUFFER_SIZE, rng)
     learning_rate = INITIAL_LEARNING_RATE
     explore_factor = INITIAL_EXPLORE
@@ -92,6 +98,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int):
 
         if episode % LOG_INTERVAL == 0:
             print(episode, learning_rate, explore_factor, evaluation.evaluate_q_table(q_table))
-            for row in q_table:
-                print([round(float(f), 3) for f in row])
-            print()
+
+    print(evaluation.evaluate_optimal())
+    print(evaluation.evaluate_optimal())
+    print(evaluation.evaluate_optimal())

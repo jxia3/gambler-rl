@@ -6,9 +6,9 @@ from q_learning import deep_q, tabular_q
 import rand
 
 # Game parameters
-TARGET_WEALTH: int = 10
+TARGET_WEALTH: int = 20
 WIN_PROB: float = 0.4
-EVAL_EPISODES: int = 20000
+EVAL_EPISODES: int = 10000
 SEED: int = 0
 
 # Initialize environment and train agent
