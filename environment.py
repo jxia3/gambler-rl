@@ -86,7 +86,7 @@ class GamblerGame:
         assert not state.done
         assert action == 0 or action == 1
         #assert action >= 0 and action <= state.wealth - 1
-        bet_amount = 1 if action == 0 else state.wealth#action + 1
+        bet_amount = 1 if action == 0 else min(state.wealth, self.target_wealth - state.wealth) # action + 1
 
         rng = np.random.default_rng(seed=state.seed)
         next_wealth = None
