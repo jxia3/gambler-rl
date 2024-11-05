@@ -20,6 +20,10 @@ class GamblerState:
         self.done = done
         self.seed = seed
 
+    def get_index(self) -> int:
+        """Returns the state as an integer index."""
+        return self.wealth
+
     def get_observation(self) -> torch.Tensor:
         """Encodes the player's current wealth as a one-hot vector."""
         observation = torch.zeros(self.target_wealth + 1, dtype=torch.float32)
@@ -52,8 +56,7 @@ class GamblerGame:
     - Transition dynamics: With probability WIN_PROB, the player's wealth increases
       by the bet amount, otherwise, the player's wealth decreases by the bet amount.
       The game terminates when the player's wealth reaches TARGET_WEALTH or 0.
-    - Reward: +1 if the player's wealth reaches TARGET_WEALTH, -1 if the player's
-      wealth reaches 0, and 0 otherwise.
+    - Reward: +1 if the player's wealth reaches TARGET_WEALTH and 0 otherwise.
     """
     target_wealth: int
     win_prob: float
@@ -105,9 +108,7 @@ class GamblerGame:
         else:
             next_wealth = max(state.wealth - bet_amount, 0)
         reward = 0
-        if next_wealth == 0:
-            reward = 0
-        elif next_wealth == self.target_wealth:
+        if next_wealth == self.target_wealth:
             reward = 1
 
         next_state = GamblerState(

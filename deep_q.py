@@ -138,7 +138,7 @@ def get_q_table(env: GamblerGame, model: ValueNetwork) -> np.ndarray:
     return np.array([])
 
 def train(env: GamblerGame, seed: int):
-    """Trains a Deep Q-Learning agent on the gambler Markov decision process."""
+    """Trains a deep Q-learning agent on the gambler Markov decision process."""
     rng = np.random.default_rng(seed=seed)
     torch.manual_seed(rand.generate_seed(rng))
 
@@ -155,9 +155,6 @@ def train(env: GamblerGame, seed: int):
     explore_factor = INITIAL_EXPLORE
 
     for episode in range(1, EPISODES + 1):
-        if episode >= 30000:
-            optimizer = torch.optim.Adam(policy_network.parameters(), lr=0.001)
-
         # Simulate trajectory with the current policy network
         trajectory = run_rollout(env, policy_network, explore_factor, rng)
         transitions.insert(trajectory)

@@ -14,4 +14,4 @@ SEED_RANGE: tuple[int, int] = (0, 1_000_000_000)
 # Initialize environment and train agent
 rng = np.random.default_rng() # seed=SEED
 env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
-deep_q.train(env, rand.generate_seed(rng))
+tabular_q.train(env, rand.generate_seed(rng))
