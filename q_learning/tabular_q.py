@@ -21,7 +21,9 @@ BUFFER_SIZE: int = 100_000
 BATCH_SIZE: int = 800
 
 EPISODES: int = 500_000
-LOG_INTERVAL: int = 1000
+CLIP_END: int = 20_000
+MAX_VALUE: float = 100
+LOG_INTERVAL: int = 1_000
 
 def run_rollout(
     env: GamblerGame,
@@ -94,10 +96,14 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarr
             q_table[state_index][train_sample[t].action] += \
                 learning_rate * (targets[t] - prev_table[state_index][train_sample[t].action])
 
+        # Clip large values in the Q-table at the beginning of training
+        if episode < CLIP_END:
+            q_table = q_table.clip(-MAX_VALUE, MAX_VALUE)
+
         # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
             explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
-        if learning_rate > MIN_LEARNING_RATE:
+        if episode >= CLIP_END and learning_rate > MIN_LEARNING_RATE:
             learning_rate = max(learning_rate * LEARNING_RATE_DECAY, MIN_LEARNING_RATE)
 
         # Log statistics
@@ -106,9 +112,6 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarr
             scores[episode] = score
             print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
-
-        if episode % 20000 == 0:
-            print(q_table[-4])
 
     return (q_table, scores)
 

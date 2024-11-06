@@ -19,8 +19,8 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": "data/tabular_q_data10.json",
-        "model_path": "data/tabular_q_model10.json",
+        "data_path": "data/tabular_q_data_99.json",
+        "model_path": "data/tabular_q_model_99.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
@@ -32,7 +32,7 @@ TRAIN_CONFIG: dict[str, Any] = {
 MODEL = "tabular_q"
 
 # Initialize environment and evaluation context
-rng = rand.create_generator(762349)
+rng = rand.create_generator(SEED)
 train_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 eval_env = GamblerGame(TARGET_WEALTH, WIN_PROB, rand.generate_seed(rng))
 evaluation = Evaluation(eval_env, EVAL_EPISODES, rand.generate_seed(rng))

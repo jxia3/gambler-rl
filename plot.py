@@ -27,7 +27,8 @@ def plot_run(data_path: str, params: dict, save_path: str):
 
     figure, axes = plt.subplots()
     axes.plot(x_values, y_values)
-    axes.axhline(data["optimal_score"], linestyle="dashed")
+    axes.axhline(data["optimal_score"], linestyle="dashed", c="green")
+    axes.axhline(data["random_score"], linestyle="dashed", c="red")
     axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
 
     axes.set_title(f"{env_key} {params['title']}")
