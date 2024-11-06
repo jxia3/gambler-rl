@@ -11,9 +11,9 @@ import rand
 
 # Training parameters
 HIDDEN_SIZE: int = 20
-DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.01
-SYNC_INTERVAL: int = 10
+DISCOUNT_RATE: float = 0.97
+LEARNING_RATE: float = 0.03
+SYNC_INTERVAL: int = 4
 
 INITIAL_EXPLORE: float = 1
 EXPLORE_DECAY: float = 0.99995
@@ -22,7 +22,7 @@ BUFFER_SIZE: int = 100_000
 BATCH_SIZE: int = 800
 
 EPISODES: int = 500_000
-CLIP_END: int = 20_000
+CLIP_END: int = 10_000
 MAX_VALUE: float = 100
 LOG_INTERVAL: int = 1_000
 
@@ -134,7 +134,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
 
         # Perform gradient descent with respect to the mean squared error loss
         optimizer.zero_grad()
-        loss = nn.MSELoss()(predicted, targets)
+        loss = nn.SmoothL1Loss()(predicted, targets)
         loss.backward()
         optimizer.step()
 
