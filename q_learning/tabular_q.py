@@ -23,7 +23,7 @@ BATCH_SIZE: int = 800
 EPISODES: int = 500_000
 CLIP_END: int = 20_000
 MAX_VALUE: float = 100
-LOG_INTERVAL: int = 1_000
+LOG_INTERVAL: int = 1000
 
 def run_rollout(
     env: GamblerGame,
