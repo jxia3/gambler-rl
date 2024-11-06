@@ -22,7 +22,9 @@ BUFFER_SIZE: int = 100_000
 BATCH_SIZE: int = 800
 
 EPISODES: int = 500_000
-LOG_INTERVAL: int = 100
+CLIP_END: int = 20_000
+MAX_VALUE: float = 100
+LOG_INTERVAL: int = 1_000
 
 class ValueNetwork(nn.Module):
     """
@@ -126,6 +128,10 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
             next_values[done_mask] = 0
             targets += DISCOUNT_RATE * next_values
 
+        # Clip large value targets at the beginning of training
+        if episode < CLIP_END:
+            targets.clamp_(-MAX_VALUE, MAX_VALUE)
+
         # Perform gradient descent with respect to the mean squared error loss
         optimizer.zero_grad()
         loss = nn.MSELoss()(predicted, targets)
@@ -149,7 +155,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
             with torch.no_grad():
                 state = env.create_state(94)
                 values = policy_network.forward(state.get_observation())
-                print("values:", values.numpy())
+                print("values:", values.numpy()[0:10])
 
     return (policy_network, scores)
 
