@@ -28,7 +28,7 @@ TRAIN_CONFIG: dict[str, Any] = {
         "model_path": f"data/deep_q_model_{TARGET_WEALTH}.pt",
     },
 }
-MODEL = "tabular_q"
+MODEL = "deep_q"
 
 # Initialize environment and evaluation context
 rng = rand.create_generator(SEED)
