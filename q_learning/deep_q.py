@@ -11,11 +11,11 @@ import rand
 
 # Training parameters
 HIDDEN_SIZE: int = 20
-INITIAL_DISCOUNT: float = 0.97
-DISCOUNT_GROWTH: float = 1.001
+INITIAL_DISCOUNT: float = 0.95
+DISCOUNT_GROWTH: float = 1.000001
 MAX_DISCOUNT: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_END_FACTOR: float = 0.05
+END_LEARNING_RATE: float = 0.001
 DECAY_EPOCHS: int = 400_000
 SYNC_INTERVAL: int = 4
 
@@ -96,7 +96,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
     scheduler = torch.optim.lr_scheduler.LinearLR(
         optimizer,
         start_factor=1,
-        end_factor=LEARNING_RATE_END_FACTOR,
+        end_factor=END_LEARNING_RATE / INITIAL_LEARNING_RATE,
         total_iters=DECAY_EPOCHS,
     )
 
