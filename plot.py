@@ -124,12 +124,12 @@ for run in (99, 100):
 '''
 
 plot_run(
-    "data/deep_q_data2_99.json",
+    "data/deep_q_data3_99.json",
     {
         "title": "Tabular Q-learning score",
         "x_label": "Training episodes",
         "y_label": "Mean score",
         "y_limits": (0.05, 0.45),
     },
-    "charts/deep_q_training2_99.png",
+    "charts/deep_q_training3_99.png",
 )
