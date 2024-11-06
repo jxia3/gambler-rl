@@ -137,12 +137,11 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
         if episode < CLIP_END:
             targets.clamp_(-MAX_VALUE, MAX_VALUE)
 
-        # Perform gradient descent with respect to the mean squared error loss
+        # Perform gradient descent with respect to the Huber loss
         optimizer.zero_grad()
         loss = nn.SmoothL1Loss()(predicted, targets)
         loss.backward()
         optimizer.step()
-        #scheduler.step()
         if scheduler.get_last_lr()[0] > MIN_LEARNING_RATE:
             scheduler.step()
 
