@@ -1,7 +1,9 @@
 import json
 import matplotlib.pyplot as plt
+import torch
+from typing import Any
 
-def load_data(data_path: str) -> dict:
+def load_data(data_path: str) -> Any:
     """Loads training data from a JSON file."""
     data = None
     with open(data_path, "r") as file:
@@ -15,16 +17,34 @@ def get_env_key(data: dict) -> str:
     win_prob = data["win_prob"]
     return f"[Gambler-{target_wealth}-{win_prob}]"
 
-def plot_run(data_path: str, params: dict, save_path: str):
-    """Plots a training curve for a training run."""
-    data = load_data(data_path)
-    env_key = get_env_key(data)
+def get_q_table_values(q_table: list[list[int]], target_wealth: int) -> tuple[list[int], list[int]]:
+    """Computes the predicted value of each state for a Q-table."""
+    states = list(range(1, target_wealth))
+    values = []
+    for wealth in states:
+        q_values = q_table[wealth][:wealth]
+        values.append(max(q_values))
+    return (states, values)
 
+def get_q_table_policy(q_table: list[list[int]], target_wealth: int) -> tuple[list[int], list[int]]:
+    """Computes the predicted bet amount at each state for a Q-table."""
+    states = list(range(1, target_wealth))
+    actions = []
+    for wealth in states:
+        action = 0
+        for a in range(1, wealth):
+            if q_table[wealth][a] > q_table[wealth][action]:
+                action = a
+        actions.append(action + 1)
+    return (states, actions)
+
+def plot_training_run(scores: dict, params: dict, save_path: str):
+    """Plots a training curve for a training run."""
     x_values = []
     y_values = []
-    for score in data["scores"]:
+    for score in scores:
         x_values.append(int(score))
-        y_values.append(float(data["scores"][score]))
+        y_values.append(float(scores[score]))
 
     figure, axes = plt.subplots()
     axes.plot(x_values, y_values)
@@ -32,66 +52,47 @@ def plot_run(data_path: str, params: dict, save_path: str):
     axes.axhline(data["random_score"], linestyle="dashed", c="red")
     axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
 
-    axes.set_title(f"{env_key} {params['title']}")
+    axes.set_title(f"{params['env_key']} {params['title']}")
     axes.set_xlabel(params["x_label"])
     axes.set_ylabel(params["y_label"])
 
     figure.savefig(save_path, bbox_inches="tight")
 
-def plot_state_values(data_path: str, model_path: str, params: dict, save_path: str):
-    """Plots the predicted value of each state for a Q-table."""
-    data = load_data(data_path)
-    q_table = load_data(model_path)
-    env_key = get_env_key(data)
-
-    x_values = list(range(1, data["target_wealth"]))
-    y_values = []
-    for wealth in x_values:
-        values = q_table[wealth][:wealth]
-        y_values.append(max(values))
-
+def plot_values(states: list[int], values: list[int], params: dict, save_path: str):
+    """Plots the predicted value of each state."""
     figure, axes = plt.subplots()
-    axes.plot(x_values, y_values)
+    axes.plot(states, values)
     axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
 
-    axes.set_title(f"{env_key} {params['title']}")
+    axes.set_title(f"{params['env_key']} {params['title']}")
     axes.set_xlabel(params["x_label"])
     axes.set_ylabel(params["y_label"])
 
     figure.savefig(save_path, bbox_inches="tight")
 
-def plot_value_policy(data_path: str, model_path: str, params: dict, save_path: str):
+def plot_policy(states: list[int], actions: list[int], params: dict, save_path: str):
     """Plots the predicted bet amount for each state for a Q-table."""
-    data = load_data(data_path)
-    q_table = load_data(model_path)
-    env_key = get_env_key(data)
-
-    x_values = list(range(1, data["target_wealth"]))
-    y_values = []
-    for wealth in x_values:
-        action = 0
-        for a in range(1, wealth):
-            if q_table[wealth][a] > q_table[wealth][action]:
-                action = a
-        y_values.append(action + 1)
-
     figure, axes = plt.subplots()
-    axes.scatter(x_values, y_values)
+    axes.scatter(states, actions)
     axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
 
-    axes.set_title(f"{env_key} {params['title']}")
+    axes.set_title(f"{params['env_key']} {params['title']}")
     axes.set_xlabel(params["x_label"])
     axes.set_ylabel(params["y_label"])
 
     figure.savefig(save_path, bbox_inches="tight")
 
-'''
 for run in (99, 100):
-    data_path = f"data/tabular_q_data_{run}.json"
-    model_path = f"data/tabular_q_model_{run}.json"
-    plot_run(
-        data_path,
+    data = load_data(f"data/tabular_q_data_{run}.json")
+    q_table = load_data(f"data/tabular_q_model_{run}.json")
+    env_key = get_env_key(data)
+    values = get_q_table_values(q_table, data["target_wealth"])
+    policy = get_q_table_policy(q_table, data["target_wealth"])
+
+    plot_training_run(
+        data["scores"],
         {
+            "env_key": env_key,
             "title": "Tabular Q-learning score",
             "x_label": "Training episodes",
             "y_label": "Mean score",
@@ -99,10 +100,11 @@ for run in (99, 100):
         },
         f"charts/tabular_q_training_{run}.png",
     )
-    plot_state_values(
-        data_path,
-        model_path,
+    plot_values(
+        values[0],
+        values[1],
         {
+            "env_key": env_key,
             "title": "Tabular Q-learning state values",
             "x_label": "Wealth",
             "y_label": "Value",
@@ -110,10 +112,11 @@ for run in (99, 100):
         },
         f"charts/tabular_q_values_{run}.png",
     )
-    plot_value_policy(
-        data_path,
-        model_path,
+    plot_policy(
+        policy[0],
+        policy[1],
         {
+            "env_key": env_key,
             "title": "Tabular Q-learning bet amounts",
             "x_label": "Wealth",
             "y_label": "Bet amount",
@@ -121,15 +124,27 @@ for run in (99, 100):
         },
         f"charts/tabular_q_policy_{run}.png",
     )
-'''
 
+'''
 plot_run(
-    "data/deep_q_data3_99.json",
+    "data/deep_q_data_99.json",
     {
         "title": "Tabular Q-learning score",
         "x_label": "Training episodes",
         "y_label": "Mean score",
         "y_limits": (0.05, 0.45),
     },
-    "charts/deep_q_training3_99.png",
+    "charts/deep_q_training_99.png",
 )
+plot_q_network_values(
+    "data/deep_q_data_99.json",
+    "data/deep_q_model_99.pt",
+    {
+        "title": "Tabular Q-learning score",
+        "x_label": "Training episodes",
+        "y_label": "Mean score",
+        "y_limits": (0.05, 0.45),
+    },
+    "charts/deep_q_values_99.png",
+)
+'''
