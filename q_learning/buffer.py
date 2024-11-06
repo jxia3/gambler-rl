@@ -105,6 +105,7 @@ class TensorTransitionBuffer:
         self.observations = torch.zeros((size, state_size), dtype=torch.float32)
         self.actions = torch.zeros((size, 1), dtype=torch.int64)
         self.rewards = torch.zeros(size, dtype=torch.float32)
+        self.next_observations = torch.zeros((size, state_size), dtype=torch.float32)
         self.next_action_masks = torch.zeros((size, action_size), dtype=torch.bool)
         self.done_mask = torch.zeros(size, dtype=torch.bool)
 
