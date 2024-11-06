@@ -85,35 +85,38 @@ def plot_value_policy(data_path: str, model_path: str, params: dict, save_path: 
 
     figure.savefig(save_path, bbox_inches="tight")
 
-plot_run(
-    "data/tabular_q_data_99.json",
-    {
-        "title": "Tabular Q-learning score",
-        "x_label": "Training episodes",
-        "y_label": "Mean score",
-        "y_limits": (0.05, 0.45),
-    },
-    "charts/tabular_q_training_99.png",
-)
-plot_state_values(
-    "data/tabular_q_data_99.json",
-    "data/tabular_q_model_99.json",
-    {
-        "title": "Tabular Q-learning state values",
-        "x_label": "Wealth",
-        "y_label": "Value",
-        "y_limits": (-0.05, 1),
-    },
-    "charts/tabular_q_values_99.png",
-)
-plot_value_policy(
-    "data/tabular_q_data_99.json",
-    "data/tabular_q_model_99.json",
-    {
-        "title": "Tabular Q-learning bet amounts",
-        "x_label": "Wealth",
-        "y_label": "Bet amount",
-        "y_limits": (0, 50),
-    },
-    "charts/tabular_q_policy_99.png",
-)
+for run in (99, 100):
+    data_path = f"data/tabular_q_data_{run}.json"
+    model_path = f"data/tabular_q_model_{run}.json"
+    plot_run(
+        data_path,
+        {
+            "title": "Tabular Q-learning score",
+            "x_label": "Training episodes",
+            "y_label": "Mean score",
+            "y_limits": (0.05, 0.45),
+        },
+        f"charts/tabular_q_training_{run}.png",
+    )
+    plot_state_values(
+        data_path,
+        model_path,
+        {
+            "title": "Tabular Q-learning state values",
+            "x_label": "Wealth",
+            "y_label": "Value",
+            "y_limits": (-0.05, 1),
+        },
+        f"charts/tabular_q_values_{run}.png",
+    )
+    plot_value_policy(
+        data_path,
+        model_path,
+        {
+            "title": "Tabular Q-learning bet amounts",
+            "x_label": "Wealth",
+            "y_label": "Bet amount",
+            "y_limits": (0, 52),
+        },
+        f"charts/tabular_q_policy_{run}.png",
+    )

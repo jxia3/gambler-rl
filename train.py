@@ -1,5 +1,4 @@
 import json
-import numpy as np
 from typing import Any
 
 from env.environment import GamblerGame
