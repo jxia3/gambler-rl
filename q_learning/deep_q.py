@@ -162,10 +162,6 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
             print(f"[{episode}] score={round(score, 4)}, loss={round(float(loss.item()), 4)}, "
                 + f"lr={round(scheduler.get_last_lr()[0], 4)}, discount={round(discount_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
-            with torch.no_grad():
-                state = env.create_state(94)
-                values = policy_network.forward(state.get_observation())
-                print("values:", values.numpy()[0:10])
 
     return (policy_network, scores)
 
