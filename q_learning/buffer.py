@@ -96,6 +96,18 @@ class TensorTransitionBuffer:
     next_action_masks: torch.Tensor
     done_mask: torch.Tensor
 
+    def __init__(self, size: int, state_size: int, action_size: int, rng: Generator):
+        self.size = size
+        self.length = 0
+        self.index = 0
+        self.rng = rng
+
+        self.observations = torch.zeros((size, state_size), dtype=torch.float32)
+        self.actions = torch.zeros((size, 1), dtype=torch.int64)
+        self.rewards = torch.zeros(size, dtype=torch.float32)
+        self.next_action_masks = torch.zeros((size, action_size), dtype=torch.bool)
+        self.done_mask = torch.zeros(size, dtype=torch.bool)
+
     def insert(self, transitions: list[Transition]):
         """Adds transitions to the buffer."""
 
