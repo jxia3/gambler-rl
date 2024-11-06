@@ -85,6 +85,7 @@ def plot_value_policy(data_path: str, model_path: str, params: dict, save_path: 
 
     figure.savefig(save_path, bbox_inches="tight")
 
+'''
 for run in (99, 100):
     data_path = f"data/tabular_q_data_{run}.json"
     model_path = f"data/tabular_q_model_{run}.json"
@@ -120,3 +121,15 @@ for run in (99, 100):
         },
         f"charts/tabular_q_policy_{run}.png",
     )
+'''
+
+plot_run(
+    "data/deep_q_data_99.json",
+    {
+        "title": "Tabular Q-learning score",
+        "x_label": "Training episodes",
+        "y_label": "Mean score",
+        "y_limits": (0.05, 0.45),
+    },
+    "charts/deep_q_training_99.png",
+)
