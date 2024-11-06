@@ -99,7 +99,6 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
         end_factor=END_LEARNING_RATE / INITIAL_LEARNING_RATE,
         total_iters=DECAY_EPOCHS,
     )
-
     transitions = TensorTransitionBuffer(
         BUFFER_SIZE,
         env.get_state_size(),
@@ -120,7 +119,6 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
 
         # Sample random batch for training and stack the transition data tensors
         # for efficient batch neural network queries
-
         train_sample = transitions.sample(BATCH_SIZE)
         states = train_sample.observations
         actions = train_sample.actions
