@@ -1,12 +1,24 @@
-from q_learning.buffer import TensorTransitionBuffer
+from q_learning.buffer import Transition, TensorTransitionBuffer
 import numpy as np
 from env.environment import GamblerGame
 
-env = GamblerGame(6, 0.4, 0)
+env = GamblerGame(6, 0.4, 1)
 state = env.reset()
 rng = np.random.default_rng()
 buffer = TensorTransitionBuffer(5, env.get_state_size(), env.get_action_size(), rng)
 
+print(state)
+r1, s2 = env.step(state, 1)
+print(r1, s2)
+r2, s3 = env.step(s2, 4)
+print(r2, s3)
+
+t = [Transition(state, 1, r1, s2), Transition(s2, 4, r2, s3)]
+buffer.insert(t)
+buffer.insert(t)
+
+print()
+print(buffer.size, buffer.length, buffer.index)
 print(buffer.observations)
 print(buffer.actions)
 print(buffer.rewards)

@@ -111,6 +111,14 @@ class TensorTransitionBuffer:
 
     def insert(self, transitions: list[Transition]):
         """Adds transitions to the buffer."""
+        for transition in transitions:
+            self.observations[self.index] = transition.state.get_observation()
+            self.actions[self.index] = transition.action
+            self.rewards[self.index] = transition.reward
+            self.next_observations[self.index] = transition.next_state.get_observation()
+            self.next_action_masks[self.index] = transition.next_state.get_action_mask()
+            self.done_mask[self.index] = bool(transition.next_state.done)
+            self.index = (self.index + 1) % self.size
 
     def sample(self, count: int) -> TensorSample:
         """Returns random transitions from the buffer."""
