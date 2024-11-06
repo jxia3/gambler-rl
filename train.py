@@ -24,8 +24,8 @@ TRAIN_CONFIG: dict[str, Any] = {
     "deep_q": {
         "train_fn": deep_q.train,
         "save_fn": deep_q.save_model,
-        "data_path": f"data/deep_q_data9901_{TARGET_WEALTH}.json",
-        "model_path": f"data/deep_q_model9901_{TARGET_WEALTH}.pt",
+        "data_path": f"data/deep_q_data169801_{TARGET_WEALTH}.json",
+        "model_path": f"data/deep_q_mode169801_{TARGET_WEALTH}.pt",
     },
 }
 MODEL = "deep_q"
