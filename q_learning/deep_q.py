@@ -12,11 +12,12 @@ import rand
 # Training parameters
 HIDDEN_SIZE: int = 20
 INITIAL_DISCOUNT: float = 0.95
-DISCOUNT_GROWTH: float = 1.0000002
-MAX_DISCOUNT: float = 0.985
+DISCOUNT_GROWTH: float = 1.0000003
+MAX_DISCOUNT: float = 0.98
 INITIAL_LEARNING_RATE: float = 0.02
-END_LEARNING_RATE: float = 0.0005
-DECAY_EPOCHS: int = 450_000
+LEARNING_RATE_DECAY: float = 0.99999
+MIN_LEARNING_RATE: float = 0.001
+DECAY_EPOCHS: int = 400_000
 SYNC_INTERVAL: int = 4
 
 INITIAL_EXPLORE: float = 1
@@ -93,12 +94,15 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
 
     # Initialize training
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=INITIAL_LEARNING_RATE)
+    '''
     scheduler = torch.optim.lr_scheduler.LinearLR(
         optimizer,
         start_factor=1,
         end_factor=END_LEARNING_RATE / INITIAL_LEARNING_RATE,
         total_iters=DECAY_EPOCHS,
     )
+    '''
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, LEARNING_RATE_DECAY)
     transitions = TensorTransitionBuffer(
         BUFFER_SIZE,
         env.get_state_size(),
@@ -147,7 +151,9 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
         loss = nn.SmoothL1Loss()(predicted, targets)
         loss.backward()
         optimizer.step()
-        scheduler.step()
+        #scheduler.step()
+        if scheduler.get_last_lr()[0] > MIN_LEARNING_RATE:
+            scheduler.step()
 
         # Adjust the discount rate and explore factor
         if discount_rate < MAX_DISCOUNT:
