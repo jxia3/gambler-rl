@@ -13,7 +13,7 @@ import rand
 HIDDEN_SIZE: int = 20
 INITIAL_DISCOUNT: float = 0.95
 DISCOUNT_GROWTH: float = 1.0000003
-MAX_DISCOUNT: float = 0.98
+MAX_DISCOUNT: float = 0.985
 INITIAL_LEARNING_RATE: float = 0.02
 END_LEARNING_RATE: float = 0.001
 DECAY_EPOCHS: int = 400_000
@@ -174,5 +174,5 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
     return (policy_network, scores)
 
 def save_model(model: nn.Module, save_path: str):
-    """Saves the model weights in a file in a readable JSON format."""
+    """Saves the model weights in a file."""
     torch.save(model.state_dict(), save_path)
