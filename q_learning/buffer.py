@@ -1,4 +1,5 @@
 from numpy.random import Generator
+import torch
 
 from env.environment import GamblerState
 
@@ -55,3 +56,12 @@ class TransitionBuffer:
     def __len__(self) -> int:
         """Returns the number of transitions in the buffer."""
         return len(self.transitions)
+
+class VectorizedBuffer:
+    """A transition buffer that stores data directly in tensors for efficient sampling."""
+    size: int
+    observations: torch.Tensor
+    actions: torch.Tensor
+    rewards: torch.Tensor
+    next_observations: torch.Tensor
+    done_mask: torch.Tensor
