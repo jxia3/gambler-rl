@@ -118,10 +118,10 @@ def plot_policy(states: list[int], actions: list[int], params: dict, save_path: 
 
     figure.savefig(save_path, bbox_inches="tight")
 
-def plot_tabular_q(key: int, t: int):
+def plot_tabular_q(key: int):
     """Generates charts for a tabular Q-learning run."""
-    data = load_data(f"data/tabular_q_data{t}_{key}.json")
-    q_table = load_data(f"data/tabular_q_model{t}_{key}.json")
+    data = load_data(f"data/tabular_q_data_{key}.json")
+    q_table = load_data(f"data/tabular_q_model_{key}.json")
     env_key = get_env_key(data)
     values = get_q_table_values(q_table, data["target_wealth"])
     policy = get_q_table_policy(q_table, data["target_wealth"])
@@ -135,7 +135,7 @@ def plot_tabular_q(key: int, t: int):
             "y_label": "Mean score",
             "y_limits": (0.05, 0.45),
         },
-        f"charts/tabular_q_training{t}_{key}.png",
+        f"charts/tabular_q_training_{key}.png",
     )
     plot_values(
         values[0],
@@ -147,7 +147,7 @@ def plot_tabular_q(key: int, t: int):
             "y_label": "Value",
             "y_limits": (-0.05, 1),
         },
-        f"charts/tabular_q_values{t}_{key}.png",
+        f"charts/tabular_q_values_{key}.png",
     )
     plot_policy(
         policy[0],
@@ -159,13 +159,13 @@ def plot_tabular_q(key: int, t: int):
             "y_label": "Bet amount",
             "y_limits": (0, 52),
         },
-        f"charts/tabular_q_policy{t}_{key}.png",
+        f"charts/tabular_q_policy_{key}.png",
     )
 
-def plot_deep_q(key: int, t: int):
+def plot_deep_q(key: int):
     """Generates charts for a deep Q-learning run."""
-    data = load_data(f"data/deep_q_data{t}_{key}.json")
-    model_state = torch.load(f"data/deep_q_model{t}_{key}.pt", weights_only=True)
+    data = load_data(f"data/deep_q_data_{key}.json")
+    model_state = torch.load(f"data/deep_q_model_{key}.pt", weights_only=True)
     env_key = get_env_key(data)
 
     target_wealth = data["target_wealth"]
@@ -183,7 +183,7 @@ def plot_deep_q(key: int, t: int):
             "y_label": "Mean score",
             "y_limits": (0.05, 0.45),
         },
-        f"charts/deep_q_training{t}_{key}.png",
+        f"charts/deep_q_training_{key}.png",
     )
     plot_values(
         values[0],
@@ -195,7 +195,7 @@ def plot_deep_q(key: int, t: int):
             "y_label": "Value",
             "y_limits": (-0.05, 1),
         },
-        f"charts/deep_q_values{t}_{key}.png",
+        f"charts/deep_q_values_{key}.png",
     )
     plot_policy(
         policy[0],
@@ -207,11 +207,11 @@ def plot_deep_q(key: int, t: int):
             "y_label": "Bet amount",
             "y_limits": (0, 52),
         },
-        f"charts/deep_q_policy{t}_{key}.png",
+        f"charts/deep_q_policy_{key}.png",
     )
 
 # Generate charts
-#for key in (99, 100):
-#    plot_tabular_q(key)
-#plot_deep_q(99, 169850)
-plot_tabular_q(99, 995)
+for key in (99, 100):
+    plot_tabular_q(key)
+for key in (99, 100):
+    plot_deep_q(key)

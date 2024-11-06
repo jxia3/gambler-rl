@@ -18,17 +18,17 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": f"data/tabular_q_data995_{TARGET_WEALTH}.json",
-        "model_path": f"data/tabular_q_model995_{TARGET_WEALTH}.json",
+        "data_path": f"data/tabular_q_data_{TARGET_WEALTH}.json",
+        "model_path": f"data/tabular_q_model_{TARGET_WEALTH}.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
         "save_fn": deep_q.save_model,
-        "data_path": f"data/deep_q_data169850_{TARGET_WEALTH}.json",
-        "model_path": f"data/deep_q_mode169850_{TARGET_WEALTH}.pt",
+        "data_path": f"data/deep_q_data_{TARGET_WEALTH}.json",
+        "model_path": f"data/deep_q_model_{TARGET_WEALTH}.pt",
     },
 }
-MODEL = "deep_q"
+MODEL = "tabular_q"
 
 # Initialize environment and evaluation context
 rng = rand.create_generator(SEED)
