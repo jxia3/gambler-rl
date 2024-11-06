@@ -12,7 +12,7 @@ import rand
 # Training parameters
 HIDDEN_SIZE: int = 20
 INITIAL_DISCOUNT: float = 0.95
-DISCOUNT_GROWTH: float = 1.000001
+DISCOUNT_GROWTH: float = 1.0000001
 MAX_DISCOUNT: float = 1
 INITIAL_LEARNING_RATE: float = 0.03
 END_LEARNING_RATE: float = 0.001
