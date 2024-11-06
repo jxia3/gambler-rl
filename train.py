@@ -11,7 +11,7 @@ TARGET_WEALTH: int = 99
 WIN_PROB: float = 0.4
 EVAL_EPISODES: int = 10_000
 BASELINE_EPISODES: int = 100_000
-SEED: int = 1
+SEED: int = 0
 
 # Training configuration
 TRAIN_CONFIG: dict[str, Any] = {
