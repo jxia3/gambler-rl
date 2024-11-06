@@ -1,3 +1,4 @@
+import numpy as np
 from numpy.random import Generator
 import torch
 
@@ -119,10 +120,21 @@ class TensorTransitionBuffer:
             self.next_action_masks[self.index] = transition.next_state.get_action_mask()
             self.done_mask[self.index] = bool(transition.next_state.done)
             self.index = (self.index + 1) % self.size
+        self.length = min(self.length + len(transitions), self.size)
 
     def sample(self, count: int) -> TensorSample:
         """Returns random transitions from the buffer."""
-        raise NotImplementedError
+        assert 1 <= count and count <= self.length
+        indices = self.rng.choice(self.length, size=count, replace=False).astype(np.int64)
+        indices = torch.from_numpy(indices)
+        return TensorSample(
+            self.observations[indices],
+            self.actions[indices],
+            self.rewards[indices],
+            self.next_observations[indices],
+            self.next_action_masks[indices],
+            self.done_mask[indices],
+        )
 
     def __len__(self) -> int:
         """Returns the number of transitions in the buffer."""
