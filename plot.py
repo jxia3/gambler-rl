@@ -1,7 +1,12 @@
 import json
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+import torch.nn as nn
 from typing import Any
+
+from env.environment import GamblerGame
+from q_learning.deep_q import ValueNetwork
 
 def load_data(data_path: str) -> Any:
     """Loads training data from a JSON file."""
@@ -38,13 +43,44 @@ def get_q_table_policy(q_table: list[list[int]], target_wealth: int) -> tuple[li
         actions.append(action + 1)
     return (states, actions)
 
-def plot_training_run(scores: dict, params: dict, save_path: str):
+def get_q_network_values(model: nn.Module, target_wealth: int) -> tuple[list[int], list[int]]:
+    """Queries a Q-value network for the predicted value of each state."""
+    states = list(range(1, target_wealth))
+    values = []
+    env = GamblerGame(target_wealth, 0.5, 0)
+
+    for wealth in states:
+        with torch.no_grad():
+            state = env.create_state(wealth)
+            q_values = model.forward(state.get_observation())
+            q_values[~state.get_action_mask()] = -np.inf
+            values.append(float(torch.max(q_values).item()))
+
+    return (states, values)
+
+def get_q_network_policy(model: nn.Module, target_wealth: int) -> tuple[list[int], list[int]]:
+    """Queries a Q-value network for the predicted bet amount at each state."""
+    states = list(range(1, target_wealth))
+    actions = []
+    env = GamblerGame(target_wealth, 0.5, 0)
+
+    for wealth in states:
+        with torch.no_grad():
+            state = env.create_state(wealth)
+            q_values = model.forward(state.get_observation())
+            q_values[~state.get_action_mask()] = -np.inf
+            action = int(torch.argmax(q_values).item())
+            actions.append(action + 1)
+
+    return (states, actions)
+
+def plot_training_run(data: dict, params: dict, save_path: str):
     """Plots a training curve for a training run."""
     x_values = []
     y_values = []
-    for score in scores:
+    for score in data["scores"]:
         x_values.append(int(score))
-        y_values.append(float(scores[score]))
+        y_values.append(float(data["scores"][score]))
 
     figure, axes = plt.subplots()
     axes.plot(x_values, y_values)
@@ -82,15 +118,16 @@ def plot_policy(states: list[int], actions: list[int], params: dict, save_path: 
 
     figure.savefig(save_path, bbox_inches="tight")
 
-for run in (99, 100):
-    data = load_data(f"data/tabular_q_data_{run}.json")
-    q_table = load_data(f"data/tabular_q_model_{run}.json")
+def plot_tabular_q(key: int):
+    """Generates charts for a tabular Q-learning run."""
+    data = load_data(f"data/tabular_q_data_{key}.json")
+    q_table = load_data(f"data/tabular_q_model_{key}.json")
     env_key = get_env_key(data)
     values = get_q_table_values(q_table, data["target_wealth"])
     policy = get_q_table_policy(q_table, data["target_wealth"])
 
     plot_training_run(
-        data["scores"],
+        data,
         {
             "env_key": env_key,
             "title": "Tabular Q-learning score",
@@ -98,7 +135,7 @@ for run in (99, 100):
             "y_label": "Mean score",
             "y_limits": (0.05, 0.45),
         },
-        f"charts/tabular_q_training_{run}.png",
+        f"charts/tabular_q_training_{key}.png",
     )
     plot_values(
         values[0],
@@ -110,7 +147,7 @@ for run in (99, 100):
             "y_label": "Value",
             "y_limits": (-0.05, 1),
         },
-        f"charts/tabular_q_values_{run}.png",
+        f"charts/tabular_q_values_{key}.png",
     )
     plot_policy(
         policy[0],
@@ -122,29 +159,58 @@ for run in (99, 100):
             "y_label": "Bet amount",
             "y_limits": (0, 52),
         },
-        f"charts/tabular_q_policy_{run}.png",
+        f"charts/tabular_q_policy_{key}.png",
     )
 
-'''
-plot_run(
-    "data/deep_q_data_99.json",
-    {
-        "title": "Tabular Q-learning score",
-        "x_label": "Training episodes",
-        "y_label": "Mean score",
-        "y_limits": (0.05, 0.45),
-    },
-    "charts/deep_q_training_99.png",
-)
-plot_q_network_values(
-    "data/deep_q_data_99.json",
-    "data/deep_q_model_99.pt",
-    {
-        "title": "Tabular Q-learning score",
-        "x_label": "Training episodes",
-        "y_label": "Mean score",
-        "y_limits": (0.05, 0.45),
-    },
-    "charts/deep_q_values_99.png",
-)
-'''
+def plot_deep_q(key: int):
+    """Generates charts for a deep Q-learning run."""
+    data = load_data(f"data/deep_q_data_{key}.json")
+    model_state = torch.load(f"data/deep_q_model_{key}.pt", weights_only=True)
+    env_key = get_env_key(data)
+
+    target_wealth = data["target_wealth"]
+    model = ValueNetwork(target_wealth + 1, target_wealth - 1)
+    model.load_state_dict(model_state)
+    values = get_q_network_values(model, target_wealth)
+    policy = get_q_network_policy(model, target_wealth)
+
+    plot_training_run(
+        data,
+        {
+            "env_key": env_key,
+            "title": "Deep Q-learning score",
+            "x_label": "Training episodes",
+            "y_label": "Mean score",
+            "y_limits": (0.05, 0.45),
+        },
+        f"charts/deep_q_training_{key}.png",
+    )
+    plot_values(
+        values[0],
+        values[1],
+        {
+            "env_key": env_key,
+            "title": "Deep Q-learning state values",
+            "x_label": "Wealth",
+            "y_label": "Value",
+            "y_limits": (-0.05, 1),
+        },
+        f"charts/deep_q_values_{key}.png",
+    )
+    plot_policy(
+        policy[0],
+        policy[1],
+        {
+            "env_key": env_key,
+            "title": "Deep Q-learning bet amounts",
+            "x_label": "Wealth",
+            "y_label": "Bet amount",
+            "y_limits": (0, 52),
+        },
+        f"charts/deep_q_policy_{key}.png",
+    )
+
+# Generate charts
+for key in (99, 100):
+    plot_tabular_q(key)
+plot_deep_q(99)
