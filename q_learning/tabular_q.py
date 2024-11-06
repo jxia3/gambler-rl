@@ -1,25 +1,29 @@
+import json
 import numpy as np
 from numpy.random import Generator
 
-from environment import GamblerGame
-from eval.evaluation import Evaluation
+from env.environment import GamblerGame
+from env.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
+import rand
 
 # Training parameters
-INIT_SDEV: float = 0.1
+INIT_SDEV: float = 0.01
 DISCOUNT_RATE: float = 1
 INITIAL_LEARNING_RATE: float = 0.02
-LEARNING_RATE_DECAY: float = 0.9999
-MIN_LEARNING_RATE: float = 0.001
+LEARNING_RATE_DECAY: float = 0.99999
+MIN_LEARNING_RATE: float = 0.0005
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.9992
+EXPLORE_DECAY: float = 0.99995
 MIN_EXPLORE: float = 0.01
-BUFFER_SIZE: int = 10_000
-BATCH_SIZE: int = 100
+BUFFER_SIZE: int = 100_000
+BATCH_SIZE: int = 800
 
-EPISODES: int = 50_000
-LOG_INTERVAL: int = 500
+EPISODES: int = 500_000
+CLIP_END: int = 20_000
+MAX_VALUE: float = 100
+LOG_INTERVAL: int = 1_000
 
 def run_rollout(
     env: GamblerGame,
@@ -53,9 +57,9 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[np.ndarray, dict]:
     """Trains a tabular Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed)
+    rng = rand.create_generator(seed)
 
     # Initialize Q-table with random values from a normal distribution
     q_table = np.zeros((env.get_state_size(), env.get_action_size()), dtype=np.float32)
@@ -84,17 +88,22 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
         done_mask = np.array([t.next_state.done for t in train_sample], dtype=np.bool_)
 
         # Update the Q-values using the discounted dynamic programming equation
-        q_max = q_table.max(axis=1)
+        prev_table = q_table.copy()
+        q_max = prev_table.max(axis=1)
         targets = rewards + DISCOUNT_RATE * q_max[next_indices] * (~done_mask)
         for t in range(len(train_sample)):
             state_index = train_sample[t].state.get_index()
             q_table[state_index][train_sample[t].action] += \
-                learning_rate * (targets[t] - q_table[state_index][train_sample[t].action])
+                learning_rate * (targets[t] - prev_table[state_index][train_sample[t].action])
+
+        # Clip large values in the Q-table at the beginning of training
+        if episode < CLIP_END:
+            q_table = q_table.clip(-MAX_VALUE, MAX_VALUE)
 
         # Decay the explore factor and learning rate
         if explore_factor > MIN_EXPLORE:
             explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
-        if learning_rate > MIN_LEARNING_RATE:
+        if episode >= CLIP_END and learning_rate > MIN_LEARNING_RATE:
             learning_rate = max(learning_rate * LEARNING_RATE_DECAY, MIN_LEARNING_RATE)
 
         # Log statistics
@@ -104,4 +113,12 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
             print(f"[{episode}] score={round(score, 4)}, lr={round(learning_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
 
-    return scores
+    return (q_table, scores)
+
+def save_model(q_table: np.ndarray, save_path: str):
+    """Saves the Q-table in a file in a readable JSON format."""
+    table = []
+    for row in q_table:
+        table.append([float(v) for v in row])
+    with open(save_path, "w") as file:
+        file.write(json.dumps(table, indent=4))

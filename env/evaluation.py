@@ -1,9 +1,11 @@
 import numpy as np
 from numpy.random import Generator
+import torch
 import torch.nn as nn
 from typing import Callable, Optional
 
-from environment import GamblerGame, GamblerState
+from env.environment import GamblerGame, GamblerState
+import rand
 
 class Evaluation:
     """
@@ -17,7 +19,7 @@ class Evaluation:
     def __init__(self, env: GamblerGame, episodes: int, seed: int):
         self.env = env
         self.episodes = episodes
-        self.rng = np.random.default_rng(seed)
+        self.rng = rand.create_generator(seed)
 
     def evaluate_q_table(self, q_table: np.ndarray, episodes: Optional[int] = None) -> float:
         """Evaluates a Q-table policy."""
@@ -38,6 +40,12 @@ class Evaluation:
         if episodes is None:
             episodes = self.episodes
         return self._evaluate_policy(self._get_optimal_action, episodes)
+
+    def evaluate_random(self, episodes: Optional[int] = None) -> float:
+        """Evaluates a random policy."""
+        if episodes is None:
+            episodes = self.episodes
+        return self._evaluate_policy(self._get_random_action, episodes)
 
     def _evaluate_policy(self, policy_fn: Callable[[GamblerState], int], episodes: int) -> float:
         """Evaluates a policy function that takes a state and returns an action."""
@@ -67,6 +75,12 @@ class Evaluation:
         table or Q-table explicitly is intractable.
         """
         actions = [0] * self.env.get_state_size()
+        for state_index in range(1, self.env.get_state_size() - 1):
+            with torch.no_grad():
+                state = self.env.create_state(state_index)
+                values = model.forward(state.get_observation())
+                values[~state.get_action_mask()] = -np.inf
+                actions[state_index] = int(torch.argmax(values).item())
         return actions
 
     def _get_optimal_action(self, state: GamblerState) -> int:
@@ -74,3 +88,8 @@ class Evaluation:
         if self.env.win_prob >= 0.5:
             return 0
         return min(state.wealth, self.env.target_wealth - state.wealth) - 1
+
+    def _get_random_action(self, state: GamblerState) -> int:
+        """Selects a random action at a state."""
+        actions = np.nonzero(state.get_action_mask().numpy())[0]
+        return self.rng.choice(actions)

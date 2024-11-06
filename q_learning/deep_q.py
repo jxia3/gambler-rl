@@ -4,24 +4,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from environment import GamblerGame, GamblerState
-from eval.evaluation import Evaluation
+from env.environment import GamblerGame
+from env.evaluation import Evaluation
 from q_learning.buffer import Transition, TransitionBuffer
 import rand
 
 # Training parameters
-HIDDEN_SIZE: int = 32
+HIDDEN_SIZE: int = 20
 DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.005
+LEARNING_RATE: float = 0.01
 SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.999
-MIN_EXPLORE: float = 0.02
-BUFFER_SIZE: int = 2000
-BATCH_SIZE: int = 100
+EXPLORE_DECAY: float = 0.99995
+MIN_EXPLORE: float = 0.01
+BUFFER_SIZE: int = 100_000
+BATCH_SIZE: int = 800
 
-EPISODES: int = 100000
+EPISODES: int = 500_000
 LOG_INTERVAL: int = 100
 
 class ValueNetwork(nn.Module):
@@ -73,9 +73,11 @@ def run_rollout(
 
     return transitions
 
-def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
+import time
+
+def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Module, dict]:
     """Trains a deep Q-learning agent on the gambler Markov decision process."""
-    rng = np.random.default_rng(seed)
+    rng = rand.create_generator(seed)
     torch.manual_seed(rand.generate_seed(rng))
 
     # Actions are sampled from the policy network and value targets are computed
@@ -89,13 +91,18 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
     transitions = TransitionBuffer(BUFFER_SIZE, rng)
     explore_factor = INITIAL_EXPLORE
+    scores = {}
+    scores[0] = evaluation.evaluate_q_network(policy_network)
 
     for episode in range(1, EPISODES + 1):
+        start = time.time()
         # Simulate trajectory with the current policy network
         trajectory = run_rollout(env, policy_network, explore_factor, rng)
         transitions.insert(trajectory)
         if len(transitions) < BATCH_SIZE:
             continue
+        print("simulate:", time.time() - start)
+        start = time.time()
 
         # Sample random batch for training and stack the transition data tensors
         # for efficient batch neural network queries
@@ -106,6 +113,8 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
         next_states = torch.vstack([t.next_state.get_observation() for t in train_sample])
         next_action_masks = torch.vstack([t.next_state.get_action_mask() for t in train_sample])
         done_mask = torch.tensor([t.next_state.done for t in train_sample], dtype=torch.bool)
+        print("sample:", time.time() - start)
+        start = time.time()
 
         # Get the current value prediction and compute the value targets
         # using the discounted dynamic programming equation
@@ -117,12 +126,16 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
             next_values = next_values.max(1).values
             next_values[done_mask] = 0
             targets += DISCOUNT_RATE * next_values
+        print("calc targets:", time.time() - start)
+        start = time.time()
 
         # Perform gradient descent with respect to the mean squared error loss
         optimizer.zero_grad()
         loss = nn.MSELoss()(predicted, targets)
         loss.backward()
         optimizer.step()
+        print("step:", time.time() - start)
+        start = time.time()
 
         # Decay the explore factor
         if explore_factor > MIN_EXPLORE:
@@ -134,8 +147,20 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> dict:
 
         # Log statistics
         if episode % LOG_INTERVAL == 0:
-            print(f"[{episode}] Loss: {loss.item()}")
-            print(f"Explore factor: {explore_factor}")
-            print()
+            score = evaluation.evaluate_q_network(policy_network)
+            scores[episode] = score
+            print(f"[{episode}] score={round(score, 4)}, loss={round(float(loss.item()), 4)}, "
+                + f"explore={round(explore_factor, 4)}")
+            print("score:", time.time() - start)
+            start = time.time()
+            '''
+            with torch.no_grad():
+                state = env.create_state(94)
+                values = policy_network.forward(state.get_observation())
+                print("values:", values.numpy())
+            '''
 
-    return {}
+    return (policy_network, scores)
+
+def save_model(model: nn.Module, save_path: str):
+    """Saves the model weights in a file in a readable JSON format."""

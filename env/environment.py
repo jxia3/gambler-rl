@@ -1,4 +1,3 @@
-import numpy as np
 from numpy.random import Generator
 import torch
 
@@ -12,13 +11,15 @@ class GamblerState:
     target_wealth: int
     wealth: int
     done: bool
-    seed: int
+    rng: Generator
+    moved: bool
 
-    def __init__(self, target_wealth: int, wealth: int, done: bool, seed: int):
+    def __init__(self, target_wealth: int, wealth: int, done: bool, rng: Generator):
         self.target_wealth = target_wealth
         self.wealth = wealth
         self.done = done
-        self.seed = seed
+        self.rng = rng
+        self.moved = False
 
     def get_index(self) -> int:
         """Returns the state as an integer index."""
@@ -40,7 +41,7 @@ class GamblerState:
     def __repr__(self) -> str:
         """Formats the state as a string."""
         return f"GamblerState(target_wealth={self.target_wealth}, " \
-            + f"wealth={self.wealth}, done={self.done}, seed={self.seed})"
+            + f"wealth={self.wealth}, done={self.done})"
 
 class GamblerGame:
     """
@@ -67,7 +68,7 @@ class GamblerGame:
         assert 0 <= win_prob and win_prob <= 1
         self.target_wealth = target_wealth
         self.win_prob = win_prob
-        self.rng = np.random.default_rng(seed)
+        self.rng = rand.create_generator(seed)
 
     def get_state_size(self) -> int:
         """Returns the size of the 1-dimensional state vector."""
@@ -89,7 +90,8 @@ class GamblerGame:
         """
         assert 1 <= wealth and wealth <= self.target_wealth - 1
         seed = rand.generate_seed(self.rng)
-        return GamblerState(self.target_wealth, wealth, False, seed)
+        rng = rand.create_generator(seed)
+        return GamblerState(self.target_wealth, wealth, False, rng)
 
     def step(self, state: GamblerState, action: int) -> tuple[float, GamblerState]:
         """
@@ -97,13 +99,13 @@ class GamblerGame:
         function returns the reward, and if the episode terminates, the done flag on the
         next state is marked as True.
         """
-        assert not state.done
+        assert not state.done and not state.moved
         assert 0 <= action and action <= state.wealth - 1
-        rng = np.random.default_rng(state.seed)
         bet_amount = action + 1
+        state.moved = True
 
         next_wealth = None
-        if rng.random() < self.win_prob:
+        if state.rng.random() < self.win_prob:
             next_wealth = min(state.wealth + bet_amount, self.target_wealth)
         else:
             next_wealth = max(state.wealth - bet_amount, 0)
@@ -115,6 +117,6 @@ class GamblerGame:
             self.target_wealth,
             next_wealth,
             next_wealth == 0 or next_wealth == self.target_wealth,
-            rand.generate_seed(rng),
+            state.rng,
         )
         return (reward, next_state)
