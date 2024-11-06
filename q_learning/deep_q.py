@@ -10,7 +10,7 @@ from q_learning.buffer import TensorTransitionBuffer, Transition
 import rand
 
 # Training parameters
-HIDDEN_SIZE: int = 16
+HIDDEN_SIZE: int = 20
 INITIAL_DISCOUNT: float = 0.95
 DISCOUNT_GROWTH: float = 1.0000003
 MAX_DISCOUNT: float = 0.985
