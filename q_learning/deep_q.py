@@ -11,8 +11,12 @@ import rand
 
 # Training parameters
 HIDDEN_SIZE: int = 20
-DISCOUNT_RATE: float = 0.97
-LEARNING_RATE: float = 0.03
+INITIAL_DISCOUNT: float = 0.97
+DISCOUNT_GROWTH: float = 1.001
+MAX_DISCOUNT: float = 1
+INITIAL_LEARNING_RATE: float = 0.02
+LEARNING_RATE_END_FACTOR: float = 0.05
+DECAY_EPOCHS: int = 400_000
 SYNC_INTERVAL: int = 4
 
 INITIAL_EXPLORE: float = 1
@@ -88,13 +92,21 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
     target_network.load_state_dict(policy_network.state_dict())
 
     # Initialize training
-    optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
+    optimizer = torch.optim.Adam(policy_network.parameters(), lr=INITIAL_LEARNING_RATE)
+    scheduler = torch.optim.lr_scheduler.LinearLR(
+        optimizer,
+        start_factor=1,
+        end_factor=LEARNING_RATE_END_FACTOR,
+        total_iters=DECAY_EPOCHS,
+    )
+
     transitions = TensorTransitionBuffer(
         BUFFER_SIZE,
         env.get_state_size(),
         env.get_action_size(),
         rng,
     )
+    discount_rate = INITIAL_DISCOUNT
     explore_factor = INITIAL_EXPLORE
     scores = {}
     scores[0] = evaluation.evaluate_q_network(policy_network)
@@ -126,7 +138,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
             next_values[~next_action_masks] = -np.inf
             next_values = next_values.max(1).values
             next_values[done_mask] = 0
-            targets += DISCOUNT_RATE * next_values
+            targets += discount_rate * next_values
 
         # Clip large value targets at the beginning of training
         if episode < CLIP_END:
@@ -137,8 +149,11 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
         loss = nn.SmoothL1Loss()(predicted, targets)
         loss.backward()
         optimizer.step()
+        scheduler.step()
 
-        # Decay the explore factor
+        # Adjust the discount rate and explore factor
+        if discount_rate < MAX_DISCOUNT:
+            discount_rate = min(discount_rate * DISCOUNT_GROWTH, MAX_DISCOUNT)
         if explore_factor > MIN_EXPLORE:
             explore_factor = max(explore_factor * EXPLORE_DECAY, MIN_EXPLORE)
 
@@ -151,6 +166,7 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
             score = evaluation.evaluate_q_network(policy_network)
             scores[episode] = score
             print(f"[{episode}] score={round(score, 4)}, loss={round(float(loss.item()), 4)}, "
+                + f"lr={round(scheduler.get_last_lr()[0], 4)}, discount={round(discount_rate, 4)}, "
                 + f"explore={round(explore_factor, 4)}")
             with torch.no_grad():
                 state = env.create_state(94)
