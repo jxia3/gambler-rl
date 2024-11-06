@@ -19,14 +19,14 @@ TRAIN_CONFIG: dict[str, Any] = {
     "tabular_q": {
         "train_fn": tabular_q.train,
         "save_fn": tabular_q.save_model,
-        "data_path": "data/tabular_q_data_99.json",
-        "model_path": "data/tabular_q_model_99.json",
+        "data_path": f"data/tabular_q_data_{TARGET_WEALTH}.json",
+        "model_path": f"data/tabular_q_model_{TARGET_WEALTH}.json",
     },
     "deep_q": {
         "train_fn": deep_q.train,
         "save_fn": deep_q.save_model,
-        "data_path": "data/deep_q_data.json",
-        "model_path": "data/deep_q_model.json",
+        "data_path": f"data/deep_q_data_{TARGET_WEALTH}.json",
+        "model_path": f"data/deep_q_model_{TARGET_WEALTH}.json",
     },
 }
 MODEL = "tabular_q"
