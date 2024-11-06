@@ -157,7 +157,7 @@ def plot_tabular_q(key: int):
             "title": "Tabular Q-learning bet amounts",
             "x_label": "Wealth",
             "y_label": "Bet amount",
-            "y_limits": (0, 52),
+            "y_limits": (0, 55),
         },
         f"charts/tabular_q_policy_{key}.png",
     )
@@ -205,7 +205,7 @@ def plot_deep_q(key: int):
             "title": "Deep Q-learning bet amounts",
             "x_label": "Wealth",
             "y_label": "Bet amount",
-            "y_limits": (0, 52),
+            "y_limits": (0, 55),
         },
         f"charts/deep_q_policy_{key}.png",
     )
