@@ -57,11 +57,52 @@ class TransitionBuffer:
         """Returns the number of transitions in the buffer."""
         return len(self.transitions)
 
-class VectorizedBuffer:
-    """A transition buffer that stores data directly in tensors for efficient sampling."""
-    size: int
+class TensorSample:
+    """A sample from a tensor transition buffer."""
     observations: torch.Tensor
     actions: torch.Tensor
     rewards: torch.Tensor
     next_observations: torch.Tensor
+    next_aciton_masks: torch.Tensor
     done_mask: torch.Tensor
+
+    def __init__(
+        self,
+        observations: torch.Tensor,
+        actions: torch.Tensor,
+        rewards: torch.Tensor,
+        next_observations: torch.Tensor,
+        next_action_masks: torch.Tensor,
+        done_mask: torch.Tensor,
+    ):
+        self.observations = observations
+        self.actions = actions
+        self.rewards = rewards
+        self.next_observations = next_observations
+        self.next_action_masks = next_action_masks
+        self.done_mask = done_mask
+
+class TensorTransitionBuffer:
+    """A transition buffer that stores data in tensors for efficient sampling."""
+    size: int
+    length: int
+    index: int
+    rng: Generator
+
+    observations: torch.Tensor
+    actions: torch.Tensor
+    rewards: torch.Tensor
+    next_observations: torch.Tensor
+    next_action_masks: torch.Tensor
+    done_mask: torch.Tensor
+
+    def insert(self, transitions: list[Transition]):
+        """Adds transitions to the buffer."""
+
+    def sample(self, count: int) -> TensorSample:
+        """Returns random transitions from the buffer."""
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        """Returns the number of transitions in the buffer."""
+        return self.length
