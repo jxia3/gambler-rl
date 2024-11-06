@@ -60,6 +60,31 @@ def plot_state_values(data_path: str, model_path: str, params: dict, save_path: 
 
     figure.savefig(save_path, bbox_inches="tight")
 
+def plot_value_policy(data_path: str, model_path: str, params: dict, save_path: str):
+    """Plots the predicted bet amount for each state for a Q-table."""
+    data = load_data(data_path)
+    q_table = load_data(model_path)
+    env_key = get_env_key(data)
+
+    x_values = list(range(1, data["target_wealth"]))
+    y_values = []
+    for wealth in x_values:
+        action = 0
+        for a in range(1, wealth):
+            if q_table[wealth][a] > q_table[wealth][action]:
+                action = a
+        y_values.append(action + 1)
+
+    figure, axes = plt.subplots()
+    axes.scatter(x_values, y_values)
+    axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
+
+    axes.set_title(f"{env_key} {params['title']}")
+    axes.set_xlabel(params["x_label"])
+    axes.set_ylabel(params["y_label"])
+
+    figure.savefig(save_path, bbox_inches="tight")
+
 plot_run(
     "data/tabular_q_data_99.json",
     {
@@ -79,5 +104,16 @@ plot_state_values(
         "y_label": "Value",
         "y_limits": (-0.05, 1),
     },
-    "charts/tabular_q_values_99.png"
+    "charts/tabular_q_values_99.png",
+)
+plot_value_policy(
+    "data/tabular_q_data_99.json",
+    "data/tabular_q_model_99.json",
+    {
+        "title": "Tabular Q-learning bet amounts",
+        "x_label": "Wealth",
+        "y_label": "Bet amount",
+        "y_limits": (0, 50),
+    },
+    "charts/tabular_q_policy_99.png",
 )
