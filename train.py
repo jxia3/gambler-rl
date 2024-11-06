@@ -9,7 +9,7 @@ import rand
 # Game parameters
 TARGET_WEALTH: int = 99
 WIN_PROB: float = 0.4
-EVAL_EPISODES: int = 10_000
+EVAL_EPISODES: int = 1_000
 BASELINE_EPISODES: int = 100_000
 SEED: int = 0
 
@@ -28,7 +28,7 @@ TRAIN_CONFIG: dict[str, Any] = {
         "model_path": f"data/deep_q_model_{TARGET_WEALTH}.json",
     },
 }
-MODEL = "tabular_q"
+MODEL = "deep_q"
 
 # Initialize environment and evaluation context
 rng = rand.create_generator(SEED)

@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.random import Generator
+import torch
 import torch.nn as nn
 from typing import Callable, Optional
 
@@ -74,6 +75,12 @@ class Evaluation:
         table or Q-table explicitly is intractable.
         """
         actions = [0] * self.env.get_state_size()
+        for state_index in range(1, self.env.get_state_size() - 1):
+            with torch.no_grad():
+                state = self.env.create_state(state_index)
+                values = model.forward(state.get_observation())
+                values[~state.get_action_mask()] = -np.inf
+                actions[state_index] = int(torch.argmax(values).item())
         return actions
 
     def _get_optimal_action(self, state: GamblerState) -> int:

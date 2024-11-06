@@ -10,18 +10,18 @@ from q_learning.buffer import Transition, TransitionBuffer
 import rand
 
 # Training parameters
-HIDDEN_SIZE: int = 32
+HIDDEN_SIZE: int = 20
 DISCOUNT_RATE: float = 1
-LEARNING_RATE: float = 0.005
+LEARNING_RATE: float = 0.01
 SYNC_INTERVAL: int = 10
 
 INITIAL_EXPLORE: float = 1
-EXPLORE_DECAY: float = 0.999
-MIN_EXPLORE: float = 0.02
-BUFFER_SIZE: int = 2000
-BATCH_SIZE: int = 100
+EXPLORE_DECAY: float = 0.99995
+MIN_EXPLORE: float = 0.01
+BUFFER_SIZE: int = 100_000
+BATCH_SIZE: int = 800
 
-EPISODES: int = 100000
+EPISODES: int = 500_000
 LOG_INTERVAL: int = 100
 
 class ValueNetwork(nn.Module):
@@ -89,6 +89,8 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=LEARNING_RATE)
     transitions = TransitionBuffer(BUFFER_SIZE, rng)
     explore_factor = INITIAL_EXPLORE
+    scores = {}
+    scores[0] = evaluation.evaluate_q_network(policy_network)
 
     for episode in range(1, EPISODES + 1):
         # Simulate trajectory with the current policy network
@@ -134,11 +136,16 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
 
         # Log statistics
         if episode % LOG_INTERVAL == 0:
-            print(f"[{episode}] Loss: {loss.item()}")
-            print(f"Explore factor: {explore_factor}")
-            print()
+            score = evaluation.evaluate_q_network(policy_network)
+            scores[episode] = score
+            print(f"[{episode}] score={round(score, 4)}, loss={round(float(loss.item()), 4)}, "
+                + f"explore={round(explore_factor, 4)}")
+            with torch.no_grad():
+                state = env.create_state(94)
+                values = policy_network.forward(state.get_observation())
+                print("values:", values)
 
-    return (policy_network, {})
+    return (policy_network, scores)
 
 def save_model(model: nn.Module, save_path: str):
     """Saves the model weights in a file in a readable JSON format."""
