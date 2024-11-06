@@ -10,7 +10,7 @@ import rand
 # Training parameters
 INIT_SDEV: float = 0.01
 DISCOUNT_RATE: float = 1
-INITIAL_LEARNING_RATE: float = 0.03
+INITIAL_LEARNING_RATE: float = 0.02
 LEARNING_RATE_DECAY: float = 0.99999
 MIN_LEARNING_RATE: float = 0.0005
 
