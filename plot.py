@@ -22,7 +22,7 @@ def get_env_key(data: dict) -> str:
     win_prob = data["win_prob"]
     return f"[Gambler-{target_wealth}-{win_prob}]"
 
-def get_q_table_values(q_table: list[list[int]], target_wealth: int) -> tuple[list[int], list[int]]:
+def get_q_table_values(q_table: list[list[int]], target_wealth: int) -> tuple[list[int], list[float]]:
     """Computes the predicted value of each state for a Q-table."""
     states = list(range(1, target_wealth))
     values = []
@@ -43,7 +43,7 @@ def get_q_table_policy(q_table: list[list[int]], target_wealth: int) -> tuple[li
         actions.append(action + 1)
     return (states, actions)
 
-def get_q_network_values(model: nn.Module, target_wealth: int) -> tuple[list[int], list[int]]:
+def get_q_network_values(model: nn.Module, target_wealth: int) -> tuple[list[int], list[float]]:
     """Queries a Q-value network for the predicted value of each state."""
     states = list(range(1, target_wealth))
     values = []
@@ -94,10 +94,17 @@ def plot_training_run(data: dict, params: dict, save_path: str):
 
     figure.savefig(save_path, bbox_inches="tight")
 
-def plot_values(states: list[int], values: list[int], params: dict, save_path: str):
+def plot_values(
+    states: list[int],
+    values: list[float],
+    true_values: list[float],
+    params: dict,
+    save_path: str,
+):
     """Plots the predicted value of each state."""
     figure, axes = plt.subplots()
-    axes.plot(states, values)
+    axes.plot(states, true_values, linestyle="dashed", c="green")
+    axes.plot(states, values, c="black")
     axes.set_ylim(params["y_limits"][0], params["y_limits"][1])
 
     axes.set_title(f"{params['env_key']} {params['title']}")
@@ -122,6 +129,7 @@ def plot_tabular_q(key: int):
     """Generates charts for a tabular Q-learning run."""
     data = load_data(f"data/tabular_q_data_{key}.json")
     q_table = load_data(f"data/tabular_q_model_{key}.json")
+    true_values = load_data(f"data/state_values_{key}.json")
     env_key = get_env_key(data)
     values = get_q_table_values(q_table, data["target_wealth"])
     policy = get_q_table_policy(q_table, data["target_wealth"])
@@ -140,6 +148,7 @@ def plot_tabular_q(key: int):
     plot_values(
         values[0],
         values[1],
+        true_values[1:-1],
         {
             "env_key": env_key,
             "title": "Tabular Q-learning state values",
@@ -166,6 +175,7 @@ def plot_deep_q(name: str, hidden_size: int, key: int):
     """Generates charts for a deep Q-learning run."""
     data = load_data(f"data/{name}_data_{key}.json")
     model_state = torch.load(f"data/{name}_model_{key}.pt", weights_only=True)
+    true_values = load_data(f"data/state_values_{key}.json")
     env_key = get_env_key(data)
 
     target_wealth = data["target_wealth"]
@@ -188,6 +198,7 @@ def plot_deep_q(name: str, hidden_size: int, key: int):
     plot_values(
         values[0],
         values[1],
+        true_values[1:-1],
         {
             "env_key": env_key,
             "title": "Deep Q-learning state values",
