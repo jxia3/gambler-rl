@@ -35,10 +35,10 @@ class ValueNetwork(nn.Module):
     A Q-value neural network with 1 hidden layer that predicts the discounted value
     for each action at a state.
     """
-    def __init__(self, state_size: int, action_size: int):
+    def __init__(self, state_size: int, action_size: int, hidden_size: int):
         super(ValueNetwork, self).__init__()
-        self.hidden = nn.Linear(state_size, HIDDEN_SIZE)
-        self.output = nn.Linear(HIDDEN_SIZE, action_size)
+        self.hidden = nn.Linear(state_size, hidden_size)
+        self.output = nn.Linear(hidden_size, action_size)
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
         out = self.hidden(state)
@@ -87,8 +87,8 @@ def train(env: GamblerGame, evaluation: Evaluation, seed: int) -> tuple[nn.Modul
     # Actions are sampled from the policy network and value targets are computed
     # using the target network. Keeping the target network fixed for several
     # training iterations at a time stabilizes the training.
-    policy_network = ValueNetwork(env.get_state_size(), env.get_action_size())
-    target_network = ValueNetwork(env.get_state_size(), env.get_action_size())
+    policy_network = ValueNetwork(env.get_state_size(), env.get_action_size(), HIDDEN_SIZE)
+    target_network = ValueNetwork(env.get_state_size(), env.get_action_size(), HIDDEN_SIZE)
     target_network.load_state_dict(policy_network.state_dict())
 
     # Initialize training

@@ -162,14 +162,14 @@ def plot_tabular_q(key: int):
         f"charts/tabular_q_policy_{key}.png",
     )
 
-def plot_deep_q(key: int):
+def plot_deep_q(name: str, hidden_size: int, key: int):
     """Generates charts for a deep Q-learning run."""
-    data = load_data(f"data/deep_q_data_{key}.json")
-    model_state = torch.load(f"data/deep_q_model_{key}.pt", weights_only=True)
+    data = load_data(f"data/{name}_data_{key}.json")
+    model_state = torch.load(f"data/{name}_model_{key}.pt", weights_only=True)
     env_key = get_env_key(data)
 
     target_wealth = data["target_wealth"]
-    model = ValueNetwork(target_wealth + 1, target_wealth - 1)
+    model = ValueNetwork(target_wealth + 1, target_wealth - 1, hidden_size)
     model.load_state_dict(model_state)
     values = get_q_network_values(model, target_wealth)
     policy = get_q_network_policy(model, target_wealth)
@@ -183,7 +183,7 @@ def plot_deep_q(key: int):
             "y_label": "Mean score",
             "y_limits": (0.05, 0.45),
         },
-        f"charts/deep_q_training_{key}.png",
+        f"charts/{name}_training_{key}.png",
     )
     plot_values(
         values[0],
@@ -195,7 +195,7 @@ def plot_deep_q(key: int):
             "y_label": "Value",
             "y_limits": (-0.05, 1),
         },
-        f"charts/deep_q_values_{key}.png",
+        f"charts/{name}_values_{key}.png",
     )
     plot_policy(
         policy[0],
@@ -207,11 +207,13 @@ def plot_deep_q(key: int):
             "y_label": "Bet amount",
             "y_limits": (0, 55),
         },
-        f"charts/deep_q_policy_{key}.png",
+        f"charts/{name}_policy_{key}.png",
     )
 
 # Generate charts
-for key in (99, 100):
-    plot_tabular_q(key)
-for key in (99, 100):
-    plot_deep_q(key)
+plot_tabular_q(99)
+plot_tabular_q(100)
+plot_deep_q("deep_q", 20, 99)
+plot_deep_q("deep_q", 20, 100)
+plot_deep_q("deep_q_small", 10, 99)
+plot_deep_q("deep_q_tiny", 5, 99)
